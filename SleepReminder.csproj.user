@@ -9,6 +9,9 @@
     </ApplicationDefinition>
   </ItemGroup>
   <ItemGroup>
+    <Compile Update="AnswerWindow.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="SetTimeWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -17,6 +20,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Page Update="AnswerWindow.xaml">
+      <SubType>Designer</SubType>
+    </Page>
     <Page Update="MainWindow.xaml">
       <SubType>Designer</SubType>
     </Page>

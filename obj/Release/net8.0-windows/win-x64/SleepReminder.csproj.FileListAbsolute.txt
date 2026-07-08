@@ -25,3 +25,5 @@ E:\Desktop\Workspace\SleepReminder\obj\Release\net8.0-windows\win-x64\SleepRemin
 E:\Desktop\Workspace\SleepReminder\obj\Release\net8.0-windows\win-x64\ref\SleepReminder.dll
 E:\Desktop\Workspace\SleepReminder\obj\Release\net8.0-windows\win-x64\SnoozeWindow.baml
 E:\Desktop\Workspace\SleepReminder\obj\Release\net8.0-windows\win-x64\SnoozeWindow.g.cs
+E:\Desktop\Workspace\SleepReminder\obj\Release\net8.0-windows\win-x64\AnswerWindow.baml
+E:\Desktop\Workspace\SleepReminder\obj\Release\net8.0-windows\win-x64\AnswerWindow.g.cs

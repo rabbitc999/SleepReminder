@@ -25,3 +25,5 @@ E:\Desktop\Workspace\SleepReminder\obj\Debug\net8.0-windows\ref\SleepReminder.dl
 E:\Desktop\Workspace\SleepReminder\obj\Debug\net8.0-windows\SleepReminder_Content.g.cs
 E:\Desktop\Workspace\SleepReminder\obj\Debug\net8.0-windows\SnoozeWindow.baml
 E:\Desktop\Workspace\SleepReminder\obj\Debug\net8.0-windows\SnoozeWindow.g.cs
+E:\Desktop\Workspace\SleepReminder\obj\Debug\net8.0-windows\AnswerWindow.baml
+E:\Desktop\Workspace\SleepReminder\obj\Debug\net8.0-windows\AnswerWindow.g.cs

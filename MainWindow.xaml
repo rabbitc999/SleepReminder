@@ -68,12 +68,12 @@
                 VerticalAlignment="Bottom" 
                 Margin="30,0,0,30"
                 Width="120" Height="50" 
-                FontSize="24" FontWeight="Bold"
+                FontSize="18" FontWeight="Bold"
                 Foreground="White" Background="#7B1FA2" 
                 BorderBrush="#4A148C" BorderThickness="2"
                 Cursor="Hand"
-                Click="ExitButton_Click"
-                Content="退出"/>
+                Click="CloseReminder_Click"
+                Content="退出(需答题)"/>
 
         <!-- 关机按钮：右下角 (Row1, Col2) -->
         <Button Grid.Row="1" Grid.Column="2" 

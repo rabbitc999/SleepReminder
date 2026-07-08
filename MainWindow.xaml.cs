@@ -19,6 +19,7 @@ namespace SleepReminder
         private ContextMenuStrip trayMenu;
         private DateTime? lastReminderDate = null; // 记录上次提醒的日期
         private bool _hasSnoozedToday = false; // 当天是否已使用延后
+        private bool _canAttemptClose = true;
 
         public MainWindow()
         {
@@ -57,7 +58,6 @@ namespace SleepReminder
 
             trayMenu = new ContextMenuStrip();
             trayMenu.Items.Add("设置提醒时间", null, OnSetTime);
-            trayMenu.Items.Add("退出程序", null, (s, e) => ExitButton_Click(null, null));
             trayIcon.ContextMenuStrip = trayMenu;
         }
 
@@ -112,6 +112,7 @@ namespace SleepReminder
             {
                 if (lastReminderDate == null || lastReminderDate.Value.Date != now.Date)
                 {
+                    _canAttemptClose = true;
                     _hasSnoozedToday = false; // 新的一天重置延后标记
                     ShowReminder();
                     lastReminderDate = now.Date;
@@ -286,59 +287,36 @@ namespace SleepReminder
             snoozeWin.Show();
         }
 
-        private void ExitButton_Click(object sender, RoutedEventArgs e)
+        private void CloseReminder_Click(object sender, RoutedEventArgs e)
         {
-            const int REQUIRED_CONFIRMS = 10;
-            int confirmCount = 0;
-            while (confirmCount < REQUIRED_CONFIRMS)
+            // 如果今天已经答错过，直接提示并返回
+            if (!_canAttemptClose)
             {
-                int remaining = REQUIRED_CONFIRMS - confirmCount;
-                string message;
-                if (remaining > 1)
-                {
-                    message = $"确认退出？还需要再确认 {remaining} 次。\n当前进度：{confirmCount}/{REQUIRED_CONFIRMS}";
-                }
-                else
-                {
-                    message = "这是最后一次确认！真的要退出吗？";
-                }
-
-                var result = MessageBox.Show(message, "退出确认", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                if (result == MessageBoxResult.Yes)
-                {
-                    confirmCount++;
-                    if (confirmCount == REQUIRED_CONFIRMS)
-                    {
-                        ShutdownApp();
-                        return;
-                    }
-                }
-                else
-                {
-                    // 用户取消，退出循环，不退出程序
-                    break;
-                }
-            }
-        }
-
-        private void ShutdownApp()
-        {
-            // 停止所有定时器
-            if (timer != null) { timer.Stop(); timer = null; }
-            if (killTaskMgrTimer != null) { killTaskMgrTimer.Stop(); killTaskMgrTimer = null; }
-
-            // 隐藏并释放托盘图标
-            if (trayIcon != null)
-            {
-                trayIcon.Visible = false;
-                trayIcon.Dispose();
-                trayIcon = null;
+                MessageBox.Show("您已经答错过一次，无法再通过答题关闭窗口！", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
             }
 
-            // 关闭窗口并退出应用
-            this.Closing -= MainWindow_Closing;
-            this.Close();
-            Application.Current.Shutdown();
+            // 创建答题窗口实例
+            var answerWin = new AnswerWindow();
+
+            // 以模态对话框方式显示，并获取返回结果
+            bool? result = answerWin.ShowDialog();
+
+            // 判断用户是否答对了所有题（包括Boss题）
+            if (result == true && answerWin.IsAllCorrect)
+            {
+                // 全部正确 → 关闭提醒（隐藏霸屏）
+                HideReminder();
+                // 记录当天已成功关闭，防止再次触发
+                lastReminderDate = DateTime.Now.Date;
+            }
+            else if (result == false && answerWin.HasWrongAnswer)
+            {
+                // 有题目答错 → 取消本次关闭机会
+                _canAttemptClose = false;
+                MessageBox.Show("您有题目答错，本次提醒无法再通过答题关闭！", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            // 如果用户点了取消（没提交），则不做任何操作
         }
     }
 }

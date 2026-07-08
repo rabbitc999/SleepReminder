@@ -10,11 +10,11 @@ none
 false
 TRACE;DEBUG;NET;NET8_0;NETCOREAPP
 E:\Desktop\Workspace\SleepReminder\App.xaml
-3-1979413829
+41769515220
 1158455007
-91181022965
+10961060279
 208-51545964
-MainWindow.xaml;SetTimeWindow.xaml;SnoozeWindow.xaml;
+AnswerWindow.xaml;MainWindow.xaml;SetTimeWindow.xaml;SnoozeWindow.xaml;
 
-True
+False
 
