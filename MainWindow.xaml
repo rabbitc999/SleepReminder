@@ -1,0 +1,91 @@
+﻿<Window x:Class="SleepReminder.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="SleepReminder" 
+        WindowStyle="None" 
+        WindowState="Maximized" 
+        Topmost="True" 
+        ShowInTaskbar="False" 
+        Background="#1a1a1a">
+    <Grid>
+        <!-- 定义 2 行，3 列 -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="2*"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- 主警告：跨两列？实际跨三列，居中显示 -->
+        <TextBlock Grid.Row="0" Grid.ColumnSpan="3" 
+                   Text="⚠️ 快去睡觉 ⚠️" 
+                   FontSize="80" 
+                   Foreground="Red" 
+                   FontWeight="Bold" 
+                   HorizontalAlignment="Center" 
+                   VerticalAlignment="Center"/>
+
+        <!-- 晚睡危害：跨三列，居中显示 -->
+        <StackPanel Grid.Row="1" Grid.ColumnSpan="3" 
+                    HorizontalAlignment="Center" 
+                    VerticalAlignment="Center" 
+                    Margin="0,0,0,40">
+            <TextBlock Text="晚睡的危害" 
+                       FontSize="36" 
+                       Foreground="#ffcc00" 
+                       FontWeight="Bold" 
+                       HorizontalAlignment="Center"
+                       TextAlignment="Center"/>
+            <TextBlock Text="免疫力下降，容易感冒" FontSize="24" Foreground="White" Margin="0,8" TextAlignment="Center"/>
+            <TextBlock Text="增加心脏病、糖尿病风险" FontSize="24" Foreground="White" Margin="0,8" TextAlignment="Center"/>
+            <TextBlock Text="记忆力和注意力减退" FontSize="24" Foreground="White" Margin="0,8" TextAlignment="Center"/>
+            <TextBlock Text="皮肤老化，出现黑眼圈" FontSize="24" Foreground="White" Margin="0,8" TextAlignment="Center"/>
+            <TextBlock Text="情绪波动，易怒焦虑" FontSize="24" Foreground="White" Margin="0,8" TextAlignment="Center"/>
+        </StackPanel>
+
+        <!-- 延后按钮：左上角 (Row0, Col0) -->
+        <Button Grid.Row="0" Grid.Column="0" 
+                HorizontalAlignment="Left" 
+                VerticalAlignment="Top" 
+                Margin="30,30,0,0"
+                Width="140" Height="50" 
+                FontSize="20" FontWeight="Bold"
+                Foreground="White" Background="#2E7D32" 
+                BorderBrush="#1B5E20" BorderThickness="2"
+                Cursor="Hand"
+                Click="SnoozeButton_Click"
+                Content="延后10分钟"/>
+
+        <!-- 退出按钮：左下角 (Row1, Col0) -->
+        <Button Grid.Row="1" Grid.Column="0" 
+                HorizontalAlignment="Left" 
+                VerticalAlignment="Bottom" 
+                Margin="30,0,0,30"
+                Width="120" Height="50" 
+                FontSize="24" FontWeight="Bold"
+                Foreground="White" Background="#7B1FA2" 
+                BorderBrush="#4A148C" BorderThickness="2"
+                Cursor="Hand"
+                Click="ExitButton_Click"
+                Content="退出"/>
+
+        <!-- 关机按钮：右下角 (Row1, Col2) -->
+        <Button Grid.Row="1" Grid.Column="2" 
+                HorizontalAlignment="Right" 
+                VerticalAlignment="Bottom" 
+                Margin="0,0,30,30"
+                Width="120" Height="50" 
+                FontSize="24" FontWeight="Bold"
+                Foreground="White" Background="#D32F2F" 
+                BorderBrush="#FF6F00" BorderThickness="2"
+                Cursor="Hand"
+                Click="ShutdownButton_Click"
+                Content="关机"/>
+    </Grid>
+</Window>

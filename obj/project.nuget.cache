@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "Vjx4aYU0uH0=",
+  "success": true,
+  "projectFilePath": "E:\\Desktop\\Workspace\\SleepReminder\\SleepReminder.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\rabbitc\\.nuget\\packages\\hardcodet.notifyicon.wpf\\2.0.1\\hardcodet.notifyicon.wpf.2.0.1.nupkg.sha512"
+  ],
+  "logs": []
+}

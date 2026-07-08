@@ -1,0 +1,2 @@
+E:\Desktop\Workspace\SleepReminder\bin\Release\net8.0-windows\publish\win-x64\SleepReminder.pdb
+E:\Desktop\Workspace\SleepReminder\bin\Release\net8.0-windows\publish\win-x64\SleepReminder.exe

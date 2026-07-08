@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "589u5SbC1Fs=",
+  "success": true,
+  "projectFilePath": "E:\\Desktop\\Workspace\\SleepReminder\\SleepReminder.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\rabbitc\\.nuget\\packages\\hardcodet.notifyicon.wpf\\2.0.1\\hardcodet.notifyicon.wpf.2.0.1.nupkg.sha512",
+    "C:\\Users\\rabbitc\\.nuget\\packages\\microsoft.net.illink.tasks\\8.0.11\\microsoft.net.illink.tasks.8.0.11.nupkg.sha512"
+  ],
+  "logs": []
+}
