@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace SleepReminder
 {
@@ -9,6 +10,7 @@ namespace SleepReminder
     {
         private static Mutex _mutex = new Mutex(true, "SleepReminder_Mutex");
         private static Mutex _daemonMutex; // 守护进程互斥体
+        private DispatcherTimer _watchdogTimer;
 
         public static bool IsDebugMode => Debugger.IsAttached;
 
@@ -61,13 +63,16 @@ namespace SleepReminder
             this.Exit += (s, args) =>
             {
                 _mutex.ReleaseMutex();
-                SignalNormalExit(); // 设置正常退出事件
+                SignalNormalExit();
             };
 
-            // 启动守护进程（作为子进程）
-            StartDaemon();
+            // 启动守护进程和监控
+            if (!IsDebugMode)
+            {
+                StartDaemon();
+                StartWatchdog();   // ← 新增
+            }
 
-            // 创建主窗口
             var mainWindow = new MainWindow();
             mainWindow.Show();
         }
@@ -82,12 +87,9 @@ namespace SleepReminder
                 psi.UseShellExecute = false;
                 psi.CreateNoWindow = true;
                 Process daemon = Process.Start(psi);
-                // 记录守护进程ID用于监控（可选）
-                // 我们可以保存到静态变量，在MainWindow中检测
             }
             catch (Exception ex)
             {
-                // 忽略
             }
         }
 
@@ -172,9 +174,37 @@ namespace SleepReminder
             catch { }
         }
 
+        private void StartWatchdog()
+        {
+            _watchdogTimer = new DispatcherTimer();
+            _watchdogTimer.Interval = TimeSpan.FromSeconds(5); // 每5秒检查一次
+            _watchdogTimer.Tick += (s, e) => WatchDaemon();
+            _watchdogTimer.Start();
+        }
+
+        private void WatchDaemon()
+        {
+            try
+            {
+                // 尝试打开守护进程的互斥体
+                bool exists = Mutex.TryOpenExisting("Global\\SleepReminderDaemonMutex", out _);
+                if (!exists)
+                {
+                    // 守护进程已消失，重新启动
+                    StartDaemon();
+                }
+            }
+            catch
+            {
+                // 如果异常（如权限问题），也尝试重启
+                StartDaemon();
+            }
+        }
+
         protected override void OnExit(ExitEventArgs e)
         {
-            SignalNormalExit(); // 确保在退出时发送信号
+            _watchdogTimer?.Stop();
+            SignalNormalExit();
             base.OnExit(e);
         }
     }

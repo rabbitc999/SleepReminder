@@ -19,6 +19,7 @@ namespace SleepReminder
         private bool _canAttemptClose = true;
         private bool _isInInterval = false;      // 当前是否处于提醒区间
         private bool _triggeredThisInterval = false; // 当前区间是否已触发过
+        private bool _isSnoozing = false;
 
         public MainWindow()
         {
@@ -44,7 +45,10 @@ namespace SleepReminder
             SetAutoStart(true);
             SetupTimer();
 
-            this.Closing += MainWindow_Closing;
+            if (!App.IsDebugMode)
+            {
+                this.Closing += MainWindow_Closing;
+            }
         }
 
         // ---------- 托盘 ----------
@@ -79,12 +83,22 @@ namespace SleepReminder
 
         private void OnSetSnooze(object sender, EventArgs e)
         {
+            if (_isSnoozing)
+            {
+                CustomMessageBox.ShowOk("延后期间不能修改延后时长！", "提示", this);
+                return;
+            }
             var win = new SnoozeSettingWindow();
             win.ShowDialog(); // 用户点击确定后已自动保存
         }
 
         private void OnSetTime(object sender, EventArgs e)
         {
+            if (_isSnoozing)
+            {
+                CustomMessageBox.ShowOk("延后期间不能修改提醒时间！", "提示", this);
+                return;
+            }
             var setWin = new SetTimeWindow();
             if (setWin.ShowDialog() == true)
             {
@@ -269,6 +283,8 @@ namespace SleepReminder
             HideReminder();
             StartKillTaskManager();
             _hasSnoozedToday = true;
+            _isSnoozing = true;
+            trayIcon.Text = "⏰ 睡眠提醒器 - 延后中";  // 托盘提示变更
 
             // 从注册表读取延后分钟数，默认10分钟
             int minutes = RegistryHelper.LoadSnoozeMinutes();
@@ -284,6 +300,9 @@ namespace SleepReminder
             {
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
+                    // ---------- 延后结束 ----------
+                    _isSnoozing = false;
+                    trayIcon.Text = "睡眠提醒器";       // 恢复托盘提示
                     if (IsInReminderInterval(DateTime.Now))
                     {
                         ShowReminder(); // 重新显示主窗口（会再次启动杀进程）

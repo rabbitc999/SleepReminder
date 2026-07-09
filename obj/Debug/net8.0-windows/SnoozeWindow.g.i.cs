@@ -61,7 +61,7 @@ namespace SleepReminder {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/SleepReminder;component/snoozewindow.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/SleepReminder;V1.0.0.0;component/snoozewindow.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\SnoozeWindow.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);
