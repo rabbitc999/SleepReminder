@@ -23,13 +23,56 @@
         </Grid.ColumnDefinitions>
 
         <!-- 主警告：跨两列？实际跨三列，居中显示 -->
-        <TextBlock Grid.Row="0" Grid.ColumnSpan="3" 
-                   Text="⚠️ 快去睡觉 ⚠️" 
-                   FontSize="80" 
-                   Foreground="Red" 
-                   FontWeight="Bold" 
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="3" 
+            Orientation="Horizontal" 
+            HorizontalAlignment="Center" 
+            VerticalAlignment="Center" 
+            Margin="0,0,0,20">
+
+            <!-- 左侧警告三角 -->
+            <!-- 左侧警告三角 -->
+            <Viewbox Width="140" Height="140" Margin="20,0">
+                <Grid Width="80" Height="80">
+                    <Path Fill="Yellow" 
+              Stroke="Black" 
+              StrokeThickness="3"
+              Data="M 40,0 L 10,70 A 12,12 0 0,0 20,80 L 60,80 A 12,12 0 0,0 70,70 Z"/>
+                    <TextBlock Text="!" 
+                   FontSize="60" 
+                   FontWeight="Black" 
+                   Foreground="Black" 
                    HorizontalAlignment="Center" 
-                   VerticalAlignment="Center"/>
+                   VerticalAlignment="Center"
+                   Margin="0,10,0,0"/>
+                </Grid>
+            </Viewbox>
+
+            <!-- 中间文字 -->
+            <TextBlock Text="快去睡觉" 
+               FontSize="80" 
+               Foreground="Red" 
+               FontWeight="Bold" 
+               Margin="20,0"
+               VerticalAlignment="Center"/>
+
+            <!-- 右侧警告三角（与左侧对称） -->
+            <!-- 左侧警告三角 -->
+            <Viewbox Width="140" Height="140" Margin="20,0">
+                <Grid Width="80" Height="80">
+                    <Path Fill="Yellow" 
+              Stroke="Black" 
+              StrokeThickness="3"
+              Data="M 40,0 L 10,70 A 12,12 0 0,0 20,80 L 60,80 A 12,12 0 0,0 70,70 Z"/>
+                    <TextBlock Text="!" 
+                   FontSize="60" 
+                   FontWeight="Black" 
+                   Foreground="Black" 
+                   HorizontalAlignment="Center" 
+                   VerticalAlignment="Center"
+                   Margin="0,10,0,0"/>
+                </Grid>
+            </Viewbox>
+        </StackPanel>
 
         <!-- 晚睡危害：跨三列，居中显示 -->
         <StackPanel Grid.Row="1" Grid.ColumnSpan="3" 
@@ -54,20 +97,20 @@
                 HorizontalAlignment="Left" 
                 VerticalAlignment="Top" 
                 Margin="30,30,0,0"
-                Width="140" Height="50" 
+                Width="150" Height="50" 
                 FontSize="20" FontWeight="Bold"
                 Foreground="White" Background="#2E7D32" 
                 BorderBrush="#1B5E20" BorderThickness="2"
                 Cursor="Hand"
                 Click="SnoozeButton_Click"
-                Content="延后10分钟"/>
+                Content="延后保存数据"/>
 
         <!-- 退出按钮：左下角 (Row1, Col0) -->
         <Button Grid.Row="1" Grid.Column="0" 
                 HorizontalAlignment="Left" 
                 VerticalAlignment="Bottom" 
                 Margin="30,0,0,30"
-                Width="120" Height="50" 
+                Width="150" Height="50" 
                 FontSize="18" FontWeight="Bold"
                 Foreground="White" Background="#7B1FA2" 
                 BorderBrush="#4A148C" BorderThickness="2"
@@ -80,7 +123,7 @@
                 HorizontalAlignment="Right" 
                 VerticalAlignment="Bottom" 
                 Margin="0,0,30,30"
-                Width="120" Height="50" 
+                Width="150" Height="50" 
                 FontSize="24" FontWeight="Bold"
                 Foreground="White" Background="#D32F2F" 
                 BorderBrush="#FF6F00" BorderThickness="2"

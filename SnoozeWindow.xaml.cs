@@ -57,11 +57,6 @@ namespace SleepReminder
             if (_remainingSeconds > 0)
             {
                 e.Cancel = true;
-                // 可选：显示提示，但为了强制，直接取消
-            }
-            else
-            {
-                // 倒计时结束才允许关闭，但这里由代码主动关闭，所以不需要特殊处理
             }
         }
     }

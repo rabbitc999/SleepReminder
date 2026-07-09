@@ -6,8 +6,6 @@ using System.Windows;
 using System.Windows.Forms;
 using Microsoft.Win32;
 using Application = System.Windows.Application;
-using MessageBox = System.Windows.MessageBox;
-using Timer = System.Threading.Timer;
 
 namespace SleepReminder
 {
@@ -17,9 +15,10 @@ namespace SleepReminder
         private System.Windows.Threading.DispatcherTimer killTaskMgrTimer;
         private NotifyIcon trayIcon;
         private ContextMenuStrip trayMenu;
-        private DateTime? lastReminderDate = null; // 记录上次提醒的日期
         private bool _hasSnoozedToday = false; // 当天是否已使用延后
         private bool _canAttemptClose = true;
+        private bool _isInInterval = false;      // 当前是否处于提醒区间
+        private bool _triggeredThisInterval = false; // 当前区间是否已触发过
 
         public MainWindow()
         {
@@ -58,7 +57,30 @@ namespace SleepReminder
 
             trayMenu = new ContextMenuStrip();
             trayMenu.Items.Add("设置提醒时间", null, OnSetTime);
+            trayMenu.Items.Add("设置延后时长", null, OnSetSnooze);
+            trayMenu.Items.Add("退出", null, OnExitWithQuiz); // 新增
             trayIcon.ContextMenuStrip = trayMenu;
+        }
+
+        private void OnExitWithQuiz(object sender, EventArgs e)
+        {
+            var answerWin = new AnswerWindow();
+            bool? result = answerWin.ShowDialog();
+
+            if (result == true && answerWin.IsAllCorrect)
+            {
+                Application.Current.Shutdown();
+            }
+            else
+            {
+                CustomMessageBox.ShowOk("答题失败或取消，无法退出！", "提示", this);
+            }
+        }
+
+        private void OnSetSnooze(object sender, EventArgs e)
+        {
+            var win = new SnoozeSettingWindow();
+            win.ShowDialog(); // 用户点击确定后已自动保存
         }
 
         private void OnSetTime(object sender, EventArgs e)
@@ -67,7 +89,6 @@ namespace SleepReminder
             if (setWin.ShowDialog() == true)
             {
                 // 保存操作已在SetTimeWindow中完成，只需重置提醒状态
-                lastReminderDate = null; // 让下次检测重新触发
                 SetupTimer();
             }
         }
@@ -85,38 +106,33 @@ namespace SleepReminder
 
         private void CheckReminder()
         {
-            var now = DateTime.Now;
-            (int sh, int sm, int eh, int em) = RegistryHelper.LoadReminderTime();
-
-            DateTime start = new DateTime(now.Year, now.Month, now.Day, sh, sm, 0);
-            DateTime end = new DateTime(now.Year, now.Month, now.Day, eh, em, 0);
-
-            // 跨天处理：如果结束时间早于开始时间，视为次日
-            bool isCrossDay = end < start;
-            if (isCrossDay)
+            // 检测状态变化
+            if (IsInReminderInterval(DateTime.Now))
             {
-                end = end.AddDays(1);
-            }
-
-            bool isInInterval = (now >= start && now <= end);
-
-            // ---------- 自动隐藏：仅生产模式，且窗口可见但不在区间内 ----------
-            if (!isInInterval && this.Visibility == Visibility.Visible)
-            {
-                HideReminder();
-                return; // 不再执行后续提醒
-            }
-
-            // ---------- 触发提醒 ----------
-            if (isInInterval && this.Visibility != Visibility.Visible)
-            {
-                if (lastReminderDate == null || lastReminderDate.Value.Date != now.Date)
+                if (!_isInInterval) // 刚进入区间
                 {
-                    _canAttemptClose = true;
-                    _hasSnoozedToday = false; // 新的一天重置延后标记
-                    ShowReminder();
-                    lastReminderDate = now.Date;
+                    _isInInterval = true;
+                    _triggeredThisInterval = false; // 重置触发标志
                 }
+
+                // 如果尚未触发，则触发提醒
+                if (!_triggeredThisInterval)
+                {
+                    _triggeredThisInterval = true;
+                    ShowReminder(); // 显示霸屏
+                }
+            }
+            else // 不在区间内
+            {
+                if (_isInInterval) // 刚退出区间
+                {
+                    _isInInterval = false;
+                    _triggeredThisInterval = false;
+                }
+
+                // 如果窗口可见，则隐藏
+                if (this.Visibility == Visibility.Visible)
+                    HideReminder();
             }
         }
 
@@ -128,7 +144,6 @@ namespace SleepReminder
             {
                 killTaskMgrTimer.Stop();
             }
-            // 可选：恢复窗口样式等，但不需要，因为下次提醒会重新设置
         }
 
         private void ShowReminder()
@@ -184,7 +199,7 @@ namespace SleepReminder
             if (this.Visibility == Visibility.Visible)
             {
                 e.Cancel = true;
-                MessageBox.Show("别想关！快去睡觉！", "强制提醒", MessageBoxButton.OK, MessageBoxImage.Warning);
+                CustomMessageBox.ShowOk("别想关！快去睡觉！", "强制提醒", this);
             }
         }
 
@@ -206,9 +221,9 @@ namespace SleepReminder
                         // 验证是否写入成功
                         string written = key.GetValue(appName) as string;
                         if (written != appPath)
-                            MessageBox.Show($"开机自启动写入失败，预期路径：{appPath}\n实际值：{written ?? "（无）"}", "警告", MessageBoxButton.OK, MessageBoxImage.Warning);
+                            CustomMessageBox.ShowOk($"开机自启动写入失败，预期路径：{appPath}\n实际值：{written ?? "（无）"}", "警告", this);
                         else if (App.IsDebugMode && App.IsDebugMode)
-                            MessageBox.Show($"开机自启动已设置为：{appPath}", "调试信息", MessageBoxButton.OK, MessageBoxImage.Information);
+                            CustomMessageBox.ShowOk($"开机自启动已设置为：{appPath}", "调试信息", this);
                     }
                     else
                     {
@@ -218,21 +233,16 @@ namespace SleepReminder
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"设置开机自启动失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                CustomMessageBox.ShowOk($"设置开机自启动失败：{ex.Message}", "错误", this);
             }
         }
 
         private void ShutdownButton_Click(object sender, RoutedEventArgs e)
         {
             // 确认对话框（置顶显示）
-            MessageBoxResult result = MessageBox.Show(
-                "确认要立即关机吗？\n所有未保存的工作将丢失！",
-                "关机确认",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning,
-                MessageBoxResult.No);
+            bool confirm = CustomMessageBox.ShowConfirm("确认要立即关机吗？\n所有未保存的工作将丢失！", "关机确认", this);
 
-            if (result == MessageBoxResult.Yes)
+            if (confirm)
             {
                 try
                 {
@@ -241,7 +251,7 @@ namespace SleepReminder
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"关机失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                    CustomMessageBox.ShowOk($"关机失败：{ex.Message}", "错误", this);
                 }
             }
         }
@@ -251,28 +261,30 @@ namespace SleepReminder
         {
             if (_hasSnoozedToday)
             {
-                MessageBox.Show("今天已经延后过一次了，不能再延后！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                CustomMessageBox.ShowOk("今天已经延后过一次了，不能再延后！", "提示", this);
                 return;
             }
 
             // 隐藏主窗口（停止杀进程）
             HideReminder();
+            StartKillTaskManager();
             _hasSnoozedToday = true;
-            int seconds = App.IsDebugMode ? 10 : 600; // 调试模式10秒，生产模式10分钟
+
+            // 从注册表读取延后分钟数，默认10分钟
+            int minutes = RegistryHelper.LoadSnoozeMinutes();
+            // 保证至少1分钟，最多120分钟（已在设置窗口限制，但防御性处理）
+            if (minutes < 1) minutes = 1;
+            if (minutes > 120) minutes = 120;
+            int seconds = minutes * 60; // 转换为秒
+
+            if (App.IsDebugMode) seconds = 10;
 
             // 创建倒计时窗口（10分钟 = 600秒）
             var snoozeWin = new SnoozeWindow(seconds, () =>
             {
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    // 检查是否仍处于提醒区间
-                    var now = DateTime.Now;
-                    (int sh, int sm, int eh, int em) = RegistryHelper.LoadReminderTime();
-                    DateTime start = new DateTime(now.Year, now.Month, now.Day, sh, sm, 0);
-                    DateTime end = new DateTime(now.Year, now.Month, now.Day, eh, em, 0);
-                    if (end < start) end = end.AddDays(1);
-
-                    if (now >= start && now <= end)
+                    if (IsInReminderInterval(DateTime.Now))
                     {
                         ShowReminder(); // 重新显示主窗口（会再次启动杀进程）
                     }
@@ -287,12 +299,23 @@ namespace SleepReminder
             snoozeWin.Show();
         }
 
+        public static bool IsInReminderInterval(DateTime time)
+        {
+            var (sh, sm, eh, em) = RegistryHelper.LoadReminderTime();
+            var start = new TimeSpan(sh, sm, 0);
+            var end = new TimeSpan(eh, em, 0);
+            if (start <= end)
+                return time.TimeOfDay >= start && time.TimeOfDay <= end;
+            else
+                return time.TimeOfDay >= start || time.TimeOfDay <= end;
+        }
+
         private void CloseReminder_Click(object sender, RoutedEventArgs e)
         {
             // 如果今天已经答错过，直接提示并返回
             if (!_canAttemptClose)
             {
-                MessageBox.Show("您已经答错过一次，无法再通过答题关闭窗口！", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                CustomMessageBox.ShowOk("您已经答错过一次，无法再通过答题关闭窗口！", "提示", this);
                 return;
             }
 
@@ -307,14 +330,12 @@ namespace SleepReminder
             {
                 // 全部正确 → 关闭提醒（隐藏霸屏）
                 HideReminder();
-                // 记录当天已成功关闭，防止再次触发
-                lastReminderDate = DateTime.Now.Date;
             }
             else if (result == false && answerWin.HasWrongAnswer)
             {
                 // 有题目答错 → 取消本次关闭机会
                 _canAttemptClose = false;
-                MessageBox.Show("您有题目答错，本次提醒无法再通过答题关闭！", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                CustomMessageBox.ShowOk("您有题目答错，本次提醒无法再通过答题关闭！", "提示", this);
             }
             // 如果用户点了取消（没提交），则不做任何操作
         }

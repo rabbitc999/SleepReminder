@@ -296,7 +296,7 @@ namespace SleepReminder
             svBoss.Visibility = Visibility.Visible;
 
             GenerateBossQuestion();
-            tbBossQuestion.Text = $"请从以下字符串中提取出所有质数（用空格或逗号分隔）：\n\n{_bossQuestionString}";
+            tbBossQuestion.Text = $"请从以下字符串中提取出所有质数（用空格分隔）：\n\n{_bossQuestionString}";
             tbBossResult.Visibility = Visibility.Collapsed;
             txtBossAnswer.Clear();
             txtBossAnswer.IsEnabled = true;

@@ -12,7 +12,13 @@
     <Compile Update="AnswerWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="CustomMessageBox.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="SetTimeWindow.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="SnoozeSettingWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="SnoozeWindow.xaml.cs">
@@ -23,10 +29,16 @@
     <Page Update="AnswerWindow.xaml">
       <SubType>Designer</SubType>
     </Page>
+    <Page Update="CustomMessageBox.xaml">
+      <SubType>Designer</SubType>
+    </Page>
     <Page Update="MainWindow.xaml">
       <SubType>Designer</SubType>
     </Page>
     <Page Update="SetTimeWindow.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="SnoozeSettingWindow.xaml">
       <SubType>Designer</SubType>
     </Page>
     <Page Update="SnoozeWindow.xaml">

@@ -27,3 +27,7 @@ E:\Desktop\Workspace\SleepReminder\obj\Release\net8.0-windows\SnoozeWindow.baml
 E:\Desktop\Workspace\SleepReminder\obj\Release\net8.0-windows\SnoozeWindow.g.cs
 E:\Desktop\Workspace\SleepReminder\obj\Release\net8.0-windows\AnswerWindow.baml
 E:\Desktop\Workspace\SleepReminder\obj\Release\net8.0-windows\AnswerWindow.g.cs
+E:\Desktop\Workspace\SleepReminder\obj\Release\net8.0-windows\SnoozeSettingWindow.baml
+E:\Desktop\Workspace\SleepReminder\obj\Release\net8.0-windows\SnoozeSettingWindow.g.cs
+E:\Desktop\Workspace\SleepReminder\obj\Release\net8.0-windows\CustomMessageBox.baml
+E:\Desktop\Workspace\SleepReminder\obj\Release\net8.0-windows\CustomMessageBox.g.cs

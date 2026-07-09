@@ -37,5 +37,35 @@ namespace SleepReminder
                 return (sh, sm, eh, em);
             }
         }
+
+        /// <summary>
+        /// 保存延后分钟数到注册表
+        /// </summary>
+        public static void SaveSnoozeMinutes(int minutes)
+        {
+            using (RegistryKey key = Registry.CurrentUser.CreateSubKey(RegKeyPath))
+            {
+                key.SetValue("SnoozeMinutes", minutes);
+            }
+        }
+
+        /// <summary>
+        /// 从注册表加载延后分钟数，若不存在则返回默认值 10
+        /// </summary>
+        public static int LoadSnoozeMinutes()
+        {
+            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RegKeyPath))
+            {
+                if (key == null)
+                    return 10;
+                object value = key.GetValue("SnoozeMinutes", 10);
+                if (value is int intVal)
+                    return intVal;
+                // 若存储为 string 则尝试转换
+                if (value is string strVal && int.TryParse(strVal, out int parsed))
+                    return parsed;
+                return 10;
+            }
+        }
     }
 }
