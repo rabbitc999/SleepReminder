@@ -9,7 +9,7 @@
         WindowState="Maximized" 
         Topmost="True" 
         ShowInTaskbar="False" 
-        Background="#1a1a1a">
+        Background="#1a1a1a" Width="1920" Height="1078">
     <Grid>
         <!-- 定义 2 行，3 列 -->
         <Grid.RowDefinitions>

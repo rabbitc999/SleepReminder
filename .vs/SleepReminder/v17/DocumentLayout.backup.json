@@ -7,8 +7,16 @@
       "RelativeMoniker": "D:0:0:{1EA39384-AA4F-491F-9AEA-577867FC614E}|SleepReminder.csproj|solutionrelative:mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\Desktop\\Workspace\\SleepReminder\\obj\\Debug\\net8.0-windows\\App.g.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:obj\\Debug\\net8.0-windows\\App.g.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{1EA39384-AA4F-491F-9AEA-577867FC614E}|SleepReminder.csproj|e:\\desktop\\workspace\\sleepreminder\\app.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{1EA39384-AA4F-491F-9AEA-577867FC614E}|SleepReminder.csproj|solutionrelative:app.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1EA39384-AA4F-491F-9AEA-577867FC614E}|SleepReminder.csproj|e:\\desktop\\workspace\\sleepreminder\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{1EA39384-AA4F-491F-9AEA-577867FC614E}|SleepReminder.csproj|solutionrelative:mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{1EA39384-AA4F-491F-9AEA-577867FC614E}|SleepReminder.csproj|e:\\desktop\\workspace\\sleepreminder\\answerwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -17,10 +25,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{1EA39384-AA4F-491F-9AEA-577867FC614E}|SleepReminder.csproj|e:\\desktop\\workspace\\sleepreminder\\app.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
       "RelativeMoniker": "D:0:0:{1EA39384-AA4F-491F-9AEA-577867FC614E}|SleepReminder.csproj|solutionrelative:app.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1EA39384-AA4F-491F-9AEA-577867FC614E}|SleepReminder.csproj|e:\\desktop\\workspace\\sleepreminder\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
-      "RelativeMoniker": "D:0:0:{1EA39384-AA4F-491F-9AEA-577867FC614E}|SleepReminder.csproj|solutionrelative:mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{1EA39384-AA4F-491F-9AEA-577867FC614E}|SleepReminder.csproj|e:\\desktop\\workspace\\sleepreminder\\answerwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
@@ -73,28 +77,24 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 2,
           "Children": [
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{e5c86464-96be-4d7c-9a8b-abcb3bbf5f92}"
-            },
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "App.xaml.cs",
-              "DocumentMoniker": "E:\\Desktop\\Workspace\\SleepReminder\\App.xaml.cs",
-              "RelativeDocumentMoniker": "App.xaml.cs",
-              "ToolTip": "E:\\Desktop\\Workspace\\SleepReminder\\App.xaml.cs",
-              "RelativeToolTip": "App.xaml.cs",
-              "ViewState": "AgIAACUAAAAAAAAAAAAowA8AAAAAAAAAAAAAAA==",
+              "Title": "App.g.cs",
+              "DocumentMoniker": "E:\\Desktop\\Workspace\\SleepReminder\\obj\\Debug\\net8.0-windows\\App.g.cs",
+              "RelativeDocumentMoniker": "obj\\Debug\\net8.0-windows\\App.g.cs",
+              "ToolTip": "E:\\Desktop\\Workspace\\SleepReminder\\obj\\Debug\\net8.0-windows\\App.g.cs",
+              "RelativeToolTip": "obj\\Debug\\net8.0-windows\\App.g.cs",
+              "ViewState": "AgIAACAAAAAAAAAAAAAkwDQAAAAMAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-08T02:40:18.078Z",
+              "WhenOpened": "2026-07-25T07:16:30.717Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 5,
               "Title": "App.xaml",
               "DocumentMoniker": "E:\\Desktop\\Workspace\\SleepReminder\\App.xaml",
               "RelativeDocumentMoniker": "App.xaml",
@@ -110,27 +110,41 @@
               "Title": "MainWindow.xaml.cs",
               "DocumentMoniker": "E:\\Desktop\\Workspace\\SleepReminder\\MainWindow.xaml.cs",
               "RelativeDocumentMoniker": "MainWindow.xaml.cs",
-              "ToolTip": "E:\\Desktop\\Workspace\\SleepReminder\\MainWindow.xaml.cs",
-              "RelativeToolTip": "MainWindow.xaml.cs",
-              "ViewState": "AgIAACIAAAAAAAAAAAAuwCsAAAAdAAAAAAAAAA==",
+              "ToolTip": "E:\\Desktop\\Workspace\\SleepReminder\\MainWindow.xaml.cs*",
+              "RelativeToolTip": "MainWindow.xaml.cs*",
+              "ViewState": "AgIAABcAAAAAAAAAAAAswC0AAAACAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-07-08T02:26:27.561Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 3,
               "Title": "MainWindow.xaml",
               "DocumentMoniker": "E:\\Desktop\\Workspace\\SleepReminder\\MainWindow.xaml",
               "RelativeDocumentMoniker": "MainWindow.xaml",
               "ToolTip": "E:\\Desktop\\Workspace\\SleepReminder\\MainWindow.xaml",
               "RelativeToolTip": "MainWindow.xaml",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-07-08T02:26:30.104Z"
+              "WhenOpened": "2026-07-08T02:26:30.104Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 2,
+              "Title": "App.xaml.cs",
+              "DocumentMoniker": "E:\\Desktop\\Workspace\\SleepReminder\\App.xaml.cs",
+              "RelativeDocumentMoniker": "App.xaml.cs",
+              "ToolTip": "E:\\Desktop\\Workspace\\SleepReminder\\App.xaml.cs",
+              "RelativeToolTip": "App.xaml.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAXAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-08T02:40:18.078Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
               "Title": "AnswerWindow.xaml.cs",
               "DocumentMoniker": "E:\\Desktop\\Workspace\\SleepReminder\\AnswerWindow.xaml.cs",
               "RelativeDocumentMoniker": "AnswerWindow.xaml.cs",
@@ -138,12 +152,11 @@
               "RelativeToolTip": "AnswerWindow.xaml.cs",
               "ViewState": "AgIAAC8BAAAAAAAAAAAiwDkBAAAXAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-08T05:34:20.379Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-07-08T05:34:20.379Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 6,
               "Title": "AnswerWindow.xaml",
               "DocumentMoniker": "E:\\Desktop\\Workspace\\SleepReminder\\AnswerWindow.xaml",
               "RelativeDocumentMoniker": "AnswerWindow.xaml",
@@ -154,7 +167,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 7,
               "Title": "SetTimeWindow.xaml.cs",
               "DocumentMoniker": "E:\\Desktop\\Workspace\\SleepReminder\\SetTimeWindow.xaml.cs",
               "RelativeDocumentMoniker": "SetTimeWindow.xaml.cs",
@@ -166,7 +179,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 8,
               "Title": "SnoozeWindow.xaml.cs",
               "DocumentMoniker": "E:\\Desktop\\Workspace\\SleepReminder\\SnoozeWindow.xaml.cs",
               "RelativeDocumentMoniker": "SnoozeWindow.xaml.cs",
@@ -174,12 +187,11 @@
               "RelativeToolTip": "SnoozeWindow.xaml.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAADsAAAANAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-08T04:11:16.005Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-07-08T04:11:16.005Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 9,
               "Title": "SnoozeSettingWindow.xaml.cs",
               "DocumentMoniker": "E:\\Desktop\\Workspace\\SleepReminder\\SnoozeSettingWindow.xaml.cs",
               "RelativeDocumentMoniker": "SnoozeSettingWindow.xaml.cs",
@@ -191,7 +203,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 10,
               "Title": "CustomMessageBox.xaml.cs",
               "DocumentMoniker": "E:\\Desktop\\Workspace\\SleepReminder\\CustomMessageBox.xaml.cs",
               "RelativeDocumentMoniker": "CustomMessageBox.xaml.cs",
@@ -199,12 +211,11 @@
               "RelativeToolTip": "CustomMessageBox.xaml.cs",
               "ViewState": "AgIAADkAAAAAAAAAAAAlwEUAAAAhAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-09T16:05:08.322Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-07-09T16:05:08.322Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 11,
               "Title": "CustomMessageBox.xaml",
               "DocumentMoniker": "E:\\Desktop\\Workspace\\SleepReminder\\CustomMessageBox.xaml",
               "RelativeDocumentMoniker": "CustomMessageBox.xaml",
@@ -215,7 +226,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 13,
               "Title": "RegistryHelper.cs",
               "DocumentMoniker": "E:\\Desktop\\Workspace\\SleepReminder\\RegistryHelper.cs",
               "RelativeDocumentMoniker": "RegistryHelper.cs",
@@ -223,12 +234,11 @@
               "RelativeToolTip": "RegistryHelper.cs",
               "ViewState": "AgIAAC4AAAAAAAAAAAAqwEQAAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-08T02:45:18.328Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-07-08T02:45:18.328Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
+              "DocumentIndex": 12,
               "Title": "SnoozeSettingWindow.xaml",
               "DocumentMoniker": "E:\\Desktop\\Workspace\\SleepReminder\\SnoozeSettingWindow.xaml",
               "RelativeDocumentMoniker": "SnoozeSettingWindow.xaml",
@@ -239,7 +249,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 13,
+              "DocumentIndex": 14,
               "Title": "SnoozeWindow.xaml",
               "DocumentMoniker": "E:\\Desktop\\Workspace\\SleepReminder\\SnoozeWindow.xaml",
               "RelativeDocumentMoniker": "SnoozeWindow.xaml",
@@ -250,7 +260,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 14,
+              "DocumentIndex": 15,
               "Title": "SetTimeWindow.xaml",
               "DocumentMoniker": "E:\\Desktop\\Workspace\\SleepReminder\\SetTimeWindow.xaml",
               "RelativeDocumentMoniker": "SetTimeWindow.xaml",
@@ -261,7 +271,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 15,
+              "DocumentIndex": 16,
               "Title": "readme.txt",
               "DocumentMoniker": "C:\\Users\\rabbitc\\.nuget\\packages\\asystem.windows.forms\\1.0.0\\readme.txt",
               "ToolTip": "C:\\Users\\rabbitc\\.nuget\\packages\\asystem.windows.forms\\1.0.0\\readme.txt",
