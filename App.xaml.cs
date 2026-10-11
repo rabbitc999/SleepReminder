@@ -14,6 +14,13 @@ namespace SleepReminder
 
         public static bool IsDebugMode => Debugger.IsAttached;
 
+        /// <summary>
+        /// 测试模式：即调试模式（Debugger.IsAttached）。开启后“今天已延后”的记忆
+        /// 只保存在内存中、不写入注册表，既不会污染真实的跨重启记忆，
+        /// 也便于单独测试该逻辑（每次启动都是全新状态）。
+        /// </summary>
+        public static bool IsTestMode => IsDebugMode;
+
         protected override void OnStartup(StartupEventArgs e)
         {
             // 检查是否以守护进程模式启动

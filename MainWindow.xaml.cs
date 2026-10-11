@@ -25,6 +25,10 @@ namespace SleepReminder
         {
             InitializeComponent();
 
+            // 恢复“今天是否已延后”的记忆：正式模式读注册表（跨重启/注销有效），
+            // 测试/调试模式只看内存，不碰注册表，保证单独测试互不污染。
+            _hasSnoozedToday = App.IsTestMode ? false : RegistryHelper.HasSnoozedToday();
+
             // ---------- 根据调试模式设置窗口初始状态 ----------
             if (App.IsDebugMode)
             {
@@ -273,7 +277,10 @@ namespace SleepReminder
         // 添加延后按钮事件
         private void SnoozeButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_hasSnoozedToday)
+            // 判断是否已延后：正式模式以注册表为准（跨重启/注销有效），
+            // 测试/调试模式只看内存，避免写入注册表、便于单独测试。
+            bool hasSnoozed = App.IsTestMode ? _hasSnoozedToday : RegistryHelper.HasSnoozedToday();
+            if (hasSnoozed)
             {
                 CustomMessageBox.ShowOk("今天已经延后过一次了，不能再延后！", "提示", this);
                 return;
@@ -283,6 +290,8 @@ namespace SleepReminder
             HideReminder();
             StartKillTaskManager();
             _hasSnoozedToday = true;
+            if (!App.IsTestMode)
+                RegistryHelper.MarkSnoozedToday(); // 持久化“今天已延后”，跨重启/注销有效
             _isSnoozing = true;
             trayIcon.Text = "⏰ 睡眠提醒器 - 延后中";  // 托盘提示变更
 
@@ -309,8 +318,9 @@ namespace SleepReminder
                     }
                     else
                     {
-                        // 已过区间，保持隐藏，并重置延后标记以便下次
-                        _hasSnoozedToday = false;
+                        // 已过区间，保持隐藏。
+                        // 注意：不在此处重置延后标记——今天是否已延后由注册表按日期记忆，
+                        // 跨重启/注销依然有效；新的自然日到来时由日期比较自动放行。
                     }
                 });
             });

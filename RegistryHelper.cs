@@ -61,10 +61,71 @@ namespace SleepReminder
                 object value = key.GetValue("SnoozeMinutes", 10);
                 if (value is int intVal)
                     return intVal;
-                // 若存储为 string 则尝试转换
+                // 若存储为 string 则尝试 convert
                 if (value is string strVal && int.TryParse(strVal, out int parsed))
                     return parsed;
                 return 10;
+            }
+        }
+
+        /// <summary>
+        /// 将“已延后的日期”写入注册表，格式 yyyy-MM-dd。
+        /// 用于跨重启 / 注销记忆“今晚是否已经延后过”。
+        /// </summary>
+        public static void SaveSnoozeDate(DateTime date)
+        {
+            using (RegistryKey key = Registry.CurrentUser.CreateSubKey(RegKeyPath))
+            {
+                key.SetValue("SnoozeDate", date.ToString("yyyy-MM-dd"));
+            }
+        }
+
+        /// <summary>
+        /// 从注册表读取已延后的日期；若不存在或格式非法则返回 null。
+        /// </summary>
+        public static DateTime? LoadSnoozeDate()
+        {
+            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RegKeyPath))
+            {
+                if (key == null)
+                    return null;
+                object value = key.GetValue("SnoozeDate");
+                if (value is string strVal &&
+                    DateTime.TryParseExact(strVal, "yyyy-MM-dd", null,
+                        System.Globalization.DateTimeStyles.None, out DateTime d))
+                {
+                    return d;
+                }
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 判断今天是否已经延后过。按自然日比较，写入注册表后
+        /// 即使重启电脑、注销用户也依然有效，直到日历日变化。
+        /// </summary>
+        public static bool HasSnoozedToday()
+        {
+            DateTime? d = LoadSnoozeDate();
+            return d.HasValue && d.Value.Date == DateTime.Today;
+        }
+
+        /// <summary>
+        /// 标记“今天已延后”——把当前自然日写入注册表。
+        /// </summary>
+        public static void MarkSnoozedToday()
+        {
+            SaveSnoozeDate(DateTime.Today);
+        }
+
+        /// <summary>
+        /// 清除延后记录（例如想手动重置时调用）。
+        /// </summary>
+        public static void ClearSnoozeDate()
+        {
+            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RegKeyPath, true))
+            {
+                key?.DeleteValue("SnoozeDate", false);
             }
         }
     }
