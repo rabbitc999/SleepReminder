@@ -6,7 +6,7 @@
 
 ## 📖 关于这个故事
 
-本项目背后有一段真实而有趣的故事。作者曾为克服熬夜写代码的瘾，逐步升级自己的“防沉迷”工具，从简单的弹窗提醒，到反任务管理器、守护进程、系统服务三层嵌套，甚至一度动念修改 BIOS。这段经历被写成了一篇短篇小说 **《我把自己关进了亲手造的电子监狱》**，收录于仓库中的 [`story.pdf`](story.pdf)。它既是开发日志，也是一次关于自律与自我对抗的黑色幽默式记录，强烈推荐阅读。
+本项目背后有一段真实而有趣的故事。作者曾为克服熬夜写代码的瘾，逐步升级自己的“防沉迷”工具，从简单的弹窗提醒，到反任务管理器、守护进程、系统服务三层嵌套，甚至一度动念修改 BIOS。这段经历被写成了一篇短篇小说 **《我把自己关进了亲手造的电子监狱》**，收录于仓库中的 [`STORY.md`](STORY.md)。它既是开发日志，也是一次关于自律与自我对抗的黑色幽默式记录，强烈推荐阅读。
 
 ---
 
@@ -52,7 +52,7 @@
 ## 📦 安装与使用
 
 ### 1. 下载发布版本
-从 [Releases](https://gitee.com/embed2026/sleep-remider/releases) 页面下载最新版的 `SleepReminder.exe`，双击运行即可（程序会自动隐藏到系统托盘）。
+从 [Releases](https://gitee.com/rabbitc999/sleep-remider/releases) 页面下载最新版的 `SleepReminder.exe`，双击运行即可（程序会自动隐藏到系统托盘）。
 
 ### 2. 手动构建（开发环境）
 - 使用 Visual Studio 2019+ 打开 `SleepReminder.sln`
@@ -105,13 +105,13 @@
 
 ## 📄 开源协议
 
-本项目采用 [GPL-3.0](LICENSE) 开源协议，请遵守协议条款。
+本项目采用 [Apache-2.0](LICENSE) 开源协议，请遵守协议条款。
 
 ---
 
 ## 📧 联系与反馈
 
-- 项目仓库：[https://gitee.com/embed2026/sleep-remider](https://gitee.com/embed2026/sleep-remider)
+- 项目仓库：[https://gitee.com/rabbitc999/sleep-remider](https://gitee.com/rabbitc999/sleep-remider)
 - 欢迎在 Issues 中提出问题和建议。
 
 ---
