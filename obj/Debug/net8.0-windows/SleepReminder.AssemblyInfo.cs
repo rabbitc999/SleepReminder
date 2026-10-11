@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SleepReminder")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a22f02a86af8e47f09f54d974c419f26dc4a73a3")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d3c41dc06abc2b44238439324aa0f11722188eb2")]
 [assembly: System.Reflection.AssemblyProductAttribute("SleepReminder")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SleepReminder")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

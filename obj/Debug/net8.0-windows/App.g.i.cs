@@ -47,7 +47,7 @@ namespace SleepReminder {
         /// </summary>
         [System.STAThreadAttribute()]
         [System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [System.CodeDom.Compiler.GeneratedCodeAttribute("PresentationBuildTasks", "9.0.0.0")]
+        [System.CodeDom.Compiler.GeneratedCodeAttribute("PresentationBuildTasks", "9.0.18.0")]
         public static void Main() {
             SleepReminder.App app = new SleepReminder.App();
             app.Run();

@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "E:\\Desktop\\Workspace\\SleepReminder\\SleepReminder.csproj": {}
+    "D:\\Desktop\\Workspace\\SleepReminder\\SleepReminder.csproj": {}
   },
   "projects": {
-    "E:\\Desktop\\Workspace\\SleepReminder\\SleepReminder.csproj": {
+    "D:\\Desktop\\Workspace\\SleepReminder\\SleepReminder.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\Desktop\\Workspace\\SleepReminder\\SleepReminder.csproj",
+        "projectUniqueName": "D:\\Desktop\\Workspace\\SleepReminder\\SleepReminder.csproj",
         "projectName": "SleepReminder",
-        "projectPath": "E:\\Desktop\\Workspace\\SleepReminder\\SleepReminder.csproj",
+        "projectPath": "D:\\Desktop\\Workspace\\SleepReminder\\SleepReminder.csproj",
         "packagesPath": "C:\\Users\\rabbitc\\.nuget\\packages\\",
-        "outputPath": "E:\\Desktop\\Workspace\\SleepReminder\\obj\\",
+        "outputPath": "D:\\Desktop\\Workspace\\SleepReminder\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
-          "D:\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
           "C:\\Users\\rabbitc\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -26,7 +26,6 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -45,7 +44,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.100"
+        "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
         "net8.0-windows7.0": {
@@ -75,7 +74,7 @@
               "privateAssets": "none"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.101/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.316/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
