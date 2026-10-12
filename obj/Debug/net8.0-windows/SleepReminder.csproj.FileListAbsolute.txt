@@ -64,3 +64,9 @@ D:\Desktop\Workspace\SleepReminder\obj\Debug\net8.0-windows\refint\SleepReminder
 D:\Desktop\Workspace\SleepReminder\obj\Debug\net8.0-windows\SleepReminder.pdb
 D:\Desktop\Workspace\SleepReminder\obj\Debug\net8.0-windows\SleepReminder.genruntimeconfig.cache
 D:\Desktop\Workspace\SleepReminder\obj\Debug\net8.0-windows\ref\SleepReminder.dll
+D:\Desktop\Workspace\SleepReminder\obj\Debug\net8.0-windows\HolidayAdjustWindow.baml
+D:\Desktop\Workspace\SleepReminder\obj\Debug\net8.0-windows\HolidayAdjustWindow.g.cs
+D:\Desktop\Workspace\SleepReminder\obj\Debug\net8.0-windows\QuotaSettingsWindow.baml
+D:\Desktop\Workspace\SleepReminder\obj\Debug\net8.0-windows\QuotaSettingsWindow.g.cs
+D:\Desktop\Workspace\SleepReminder\obj\Debug\net8.0-windows\AppearanceSettingsWindow.baml
+D:\Desktop\Workspace\SleepReminder\obj\Debug\net8.0-windows\AppearanceSettingsWindow.g.cs

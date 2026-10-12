@@ -7,17 +7,25 @@
         Topmost="True"
         ShowInTaskbar="False"
         ResizeMode="NoResize"
-        Width="300" Height="120"
+        Width="360" Height="170"
         WindowStartupLocation="Manual"
         Background="#333333"
         AllowsTransparency="False">
-    <Grid>
-        <TextBlock x:Name="txtCountdown" 
-                   Text="10:00" 
-                   FontSize="48" 
-                   Foreground="White" 
-                   HorizontalAlignment="Center" 
-                   VerticalAlignment="Center" 
+    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+        <TextBlock x:Name="txtCountdown"
+                   Text="10:00"
+                   FontSize="48"
+                   Foreground="White"
+                   HorizontalAlignment="Center"
                    FontWeight="Bold"/>
-    </Grid>
+        <!-- 额度摘要：本夜固定剩余 / 本周附加剩余 / 夜的类型与系数 -->
+        <TextBlock x:Name="txtQuota"
+                   Text=""
+                   FontSize="13"
+                   Foreground="#cccccc"
+                   HorizontalAlignment="Center"
+                   TextAlignment="Center"
+                   TextWrapping="Wrap"
+                   Margin="16,10,16,0"/>
+    </StackPanel>
 </Window>

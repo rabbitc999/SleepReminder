@@ -22,6 +22,17 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
+        <!-- 背景层：自定义图片（可选）。未设置时保持窗口纯色背景 -->
+        <Image x:Name="imgWarningBackground"
+               Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Grid.ColumnSpan="3"
+               Stretch="UniformToFill"
+               Visibility="Collapsed"/>
+        <!-- 半透明遮罩：有背景图时压暗一层，保证前景文字始终清晰可读 -->
+        <Rectangle x:Name="rectWarningOverlay"
+                   Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Grid.ColumnSpan="3"
+                   Fill="#B3000000"
+                   Visibility="Collapsed"/>
+
         <!-- 主警告：跨两列？实际跨三列，居中显示 -->
         <StackPanel Grid.Row="0" Grid.ColumnSpan="3" 
             Orientation="Horizontal" 
@@ -48,7 +59,8 @@
             </Viewbox>
 
             <!-- 中间文字 -->
-            <TextBlock Text="快去睡觉" 
+            <TextBlock x:Name="txtWarningTitle"
+               Text="快去睡觉" 
                FontSize="80" 
                Foreground="Red" 
                FontWeight="Bold" 
@@ -74,22 +86,19 @@
             </Viewbox>
         </StackPanel>
 
-        <!-- 晚睡危害：跨三列，居中显示 -->
-        <StackPanel Grid.Row="1" Grid.ColumnSpan="3" 
+        <!-- 晚睡危害：跨三列，居中显示（条目正文运行时按“提醒外观设置”生成） -->
+        <StackPanel x:Name="spWarningTips"
+                    Grid.Row="1" Grid.ColumnSpan="3" 
                     HorizontalAlignment="Center" 
                     VerticalAlignment="Center" 
                     Margin="0,0,0,40">
-            <TextBlock Text="晚睡的危害" 
+            <TextBlock x:Name="tbTipsHeader"
+                       Text="晚睡的危害" 
                        FontSize="36" 
                        Foreground="#ffcc00" 
                        FontWeight="Bold" 
                        HorizontalAlignment="Center"
                        TextAlignment="Center"/>
-            <TextBlock Text="免疫力下降，容易感冒" FontSize="24" Foreground="White" Margin="0,8" TextAlignment="Center"/>
-            <TextBlock Text="增加心脏病、糖尿病风险" FontSize="24" Foreground="White" Margin="0,8" TextAlignment="Center"/>
-            <TextBlock Text="记忆力和注意力减退" FontSize="24" Foreground="White" Margin="0,8" TextAlignment="Center"/>
-            <TextBlock Text="皮肤老化，出现黑眼圈" FontSize="24" Foreground="White" Margin="0,8" TextAlignment="Center"/>
-            <TextBlock Text="情绪波动，易怒焦虑" FontSize="24" Foreground="White" Margin="0,8" TextAlignment="Center"/>
         </StackPanel>
 
         <!-- 延后按钮：左上角 (Row0, Col0) -->
@@ -104,6 +113,17 @@
                 Cursor="Hand"
                 Click="SnoozeButton_Click"
                 Content="延后保存数据"/>
+
+        <!-- 额度摘要：右上角 (Row0, Col2)，进入提醒时刷新 -->
+        <TextBlock x:Name="txtQuotaHint"
+                   Grid.Row="0" Grid.Column="2"
+                   HorizontalAlignment="Right"
+                   VerticalAlignment="Top"
+                   Margin="0,34,30,0"
+                   FontSize="16"
+                   Foreground="#9E9E9E"
+                   TextAlignment="Right"
+                   Text=""/>
 
         <!-- 退出按钮：左下角 (Row1, Col0) -->
         <Button Grid.Row="1" Grid.Column="0" 

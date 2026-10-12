@@ -68,65 +68,8 @@ namespace SleepReminder
             }
         }
 
-        /// <summary>
-        /// 将“已延后的日期”写入注册表，格式 yyyy-MM-dd。
-        /// 用于跨重启 / 注销记忆“今晚是否已经延后过”。
-        /// </summary>
-        public static void SaveSnoozeDate(DateTime date)
-        {
-            using (RegistryKey key = Registry.CurrentUser.CreateSubKey(RegKeyPath))
-            {
-                key.SetValue("SnoozeDate", date.ToString("yyyy-MM-dd"));
-            }
-        }
-
-        /// <summary>
-        /// 从注册表读取已延后的日期；若不存在或格式非法则返回 null。
-        /// </summary>
-        public static DateTime? LoadSnoozeDate()
-        {
-            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RegKeyPath))
-            {
-                if (key == null)
-                    return null;
-                object value = key.GetValue("SnoozeDate");
-                if (value is string strVal &&
-                    DateTime.TryParseExact(strVal, "yyyy-MM-dd", null,
-                        System.Globalization.DateTimeStyles.None, out DateTime d))
-                {
-                    return d;
-                }
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// 判断今天是否已经延后过。按自然日比较，写入注册表后
-        /// 即使重启电脑、注销用户也依然有效，直到日历日变化。
-        /// </summary>
-        public static bool HasSnoozedToday()
-        {
-            DateTime? d = LoadSnoozeDate();
-            return d.HasValue && d.Value.Date == DateTime.Today;
-        }
-
-        /// <summary>
-        /// 标记“今天已延后”——把当前自然日写入注册表。
-        /// </summary>
-        public static void MarkSnoozedToday()
-        {
-            SaveSnoozeDate(DateTime.Today);
-        }
-
-        /// <summary>
-        /// 清除延后记录（例如想手动重置时调用）。
-        /// </summary>
-        public static void ClearSnoozeDate()
-        {
-            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RegKeyPath, true))
-            {
-                key?.DeleteValue("SnoozeDate", false);
-            }
-        }
+        // 说明：早期版本用注册表里的 “SnoozeDate” 记“今晚是否已延后”，每个自然日只放行一次。
+        // 该机制已被“借贷式额度账本”取代（见 SleepLedger），额度按夜结算、可多次延后，
+        // 因此这里不再保留那套按日期开关的方法。
     }
 }

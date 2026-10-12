@@ -3,7 +3,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Forms;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 using Application = System.Windows.Application;
 
@@ -15,7 +18,6 @@ namespace SleepReminder
         private System.Windows.Threading.DispatcherTimer killTaskMgrTimer;
         private NotifyIcon trayIcon;
         private ContextMenuStrip trayMenu;
-        private bool _hasSnoozedToday = false; // 当天是否已使用延后
         private bool _canAttemptClose = true;
         private bool _isInInterval = false;      // 当前是否处于提醒区间
         private bool _triggeredThisInterval = false; // 当前区间是否已触发过
@@ -24,10 +26,6 @@ namespace SleepReminder
         public MainWindow()
         {
             InitializeComponent();
-
-            // 恢复“今天是否已延后”的记忆：正式模式读注册表（跨重启/注销有效），
-            // 测试/调试模式只看内存，不碰注册表，保证单独测试互不污染。
-            _hasSnoozedToday = App.IsTestMode ? false : RegistryHelper.HasSnoozedToday();
 
             // ---------- 根据调试模式设置窗口初始状态 ----------
             if (App.IsDebugMode)
@@ -48,10 +46,80 @@ namespace SleepReminder
             InitializeTray();
             SetAutoStart(true);
             SetupTimer();
+            ApplyAppearance();
 
             if (!App.IsDebugMode)
             {
                 this.Closing += MainWindow_Closing;
+            }
+        }
+
+        // ---------- 外观（背景图 / 文字） ----------
+
+        /// <summary>
+        /// 按 <see cref="AppearanceSettings"/> 应用提醒页外观：重建条目正文、
+        /// 设置大标题与小标题，并按需装载背景图片。图片读取失败时静默退回纯色背景，
+        /// 不会因为一张图挂掉整个提醒。
+        /// </summary>
+        private void ApplyAppearance()
+        {
+            AppearanceSettings appearance = AppearanceSettings.Current;
+
+            txtWarningTitle.Text = appearance.Title;
+            tbTipsHeader.Text = appearance.TipsHeader;
+            tbTipsHeader.Visibility = appearance.TipsHeader.Length > 0
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+
+            // 保留标题（第 0 个子元素），其余条目正文全部重建
+            for (int i = spWarningTips.Children.Count - 1; i >= 1; i--)
+                spWarningTips.Children.RemoveAt(i);
+
+            foreach (string tip in appearance.Tips)
+            {
+                spWarningTips.Children.Add(new TextBlock
+                {
+                    Text = tip,
+                    FontSize = 24,
+                    Foreground = Brushes.White,
+                    Margin = new Thickness(0, 8, 0, 8),
+                    TextAlignment = TextAlignment.Center
+                });
+            }
+
+            ApplyBackgroundImage(appearance);
+        }
+
+        /// <summary>装载并显示自定义背景图片；无图或读取失败时退回纯色背景。</summary>
+        /// <param name="appearance">当前外观设置。</param>
+        private void ApplyBackgroundImage(AppearanceSettings appearance)
+        {
+            if (!appearance.HasUsableImage)
+            {
+                imgWarningBackground.Source = null;
+                imgWarningBackground.Visibility = Visibility.Collapsed;
+                rectWarningOverlay.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            try
+            {
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.CacheOption = BitmapCacheOption.OnLoad; // 读完即释放文件句柄，避免锁文件
+                bitmap.UriSource = new Uri(appearance.BackgroundImagePath);
+                bitmap.EndInit();
+                bitmap.Freeze();
+
+                imgWarningBackground.Source = bitmap;
+                imgWarningBackground.Visibility = Visibility.Visible;
+                rectWarningOverlay.Visibility = Visibility.Visible;
+            }
+            catch
+            {
+                imgWarningBackground.Source = null;
+                imgWarningBackground.Visibility = Visibility.Collapsed;
+                rectWarningOverlay.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -66,8 +134,33 @@ namespace SleepReminder
             trayMenu = new ContextMenuStrip();
             trayMenu.Items.Add("设置提醒时间", null, OnSetTime);
             trayMenu.Items.Add("设置延后时长", null, OnSetSnooze);
+            trayMenu.Items.Add("额度设置", null, OnSetQuota);
+            trayMenu.Items.Add("提醒外观", null, OnSetAppearance);
             trayMenu.Items.Add("退出", null, OnExitWithQuiz); // 新增
             trayIcon.ContextMenuStrip = trayMenu;
+        }
+
+        /// <summary>打开提醒外观设置窗口（背景图片与页面文字，改完立即生效）。</summary>
+        private void OnSetAppearance(object sender, EventArgs e)
+        {
+            var win = new AppearanceSettingsWindow();
+            if (win.ShowDialog() == true)
+            {
+                ApplyAppearance();
+            }
+        }
+
+        /// <summary>打开额度设置窗口（周制与额度参数，受"每周一次"的修改锁约束）。</summary>
+        private void OnSetQuota(object sender, EventArgs e)
+        {
+            if (_isSnoozing)
+            {
+                CustomMessageBox.ShowOk("延后期间不能修改额度设置！", "提示", this);
+                return;
+            }
+
+            var win = new QuotaSettingsWindow();
+            win.ShowDialog();
         }
 
         private void OnExitWithQuiz(object sender, EventArgs e)
@@ -174,11 +267,30 @@ namespace SleepReminder
                 this.Topmost = true;
             }
 
+            // 刷新额度摘要：进提醒时让用户先看到本夜还能延后多少
+            RefreshQuotaHint();
+
+            // 外观可能刚被改过，进提醒时重新应用一次
+            ApplyAppearance();
+
             this.Activate();
             this.Focus();
 
             // 启动任务管理器绞杀定时器
             StartKillTaskManager();
+        }
+
+        /// <summary>把当前额度摘要刷新到主窗口右上角（取不到就留空）。</summary>
+        private void RefreshQuotaHint()
+        {
+            try
+            {
+                txtQuotaHint.Text = SleepLedger.DescribeQuota(DateTime.Now);
+            }
+            catch
+            {
+                txtQuotaHint.Text = string.Empty;
+            }
         }
 
         // ---------- 任务管理器检测与终止 ----------
@@ -274,56 +386,93 @@ namespace SleepReminder
             }
         }
 
-        // 添加延后按钮事件
+        // 添加延后按钮事件（借贷机制：延后 = 从额度里"借款"）
         private void SnoozeButton_Click(object sender, RoutedEventArgs e)
         {
-            // 判断是否已延后：正式模式以注册表为准（跨重启/注销有效），
-            // 测试/调试模式只看内存，避免写入注册表、便于单独测试。
-            bool hasSnoozed = App.IsTestMode ? _hasSnoozedToday : RegistryHelper.HasSnoozedToday();
-            if (hasSnoozed)
+            DateTime now = DateTime.Now;
+
+            // 1) 先看额度：这一夜还能延后多少分钟
+            int available = SleepLedger.GetAvailableMinutes(now);
+            if (available <= 0)
             {
-                CustomMessageBox.ShowOk("今天已经延后过一次了，不能再延后！", "提示", this);
+                CustomMessageBox.ShowOk(
+                    "今晚的延后额度已经用完，不能再延后了。\n\n" +
+                    SleepLedger.DescribeQuota(now) + "\n\n" +
+                    "额度按“夜”结算：固定额度每夜白送、不可累积；\n" +
+                    "附加额度按滚动 7 天回补。关机 / 重启即为一夜的终点。",
+                    "额度已用尽", this);
                 return;
             }
 
-            // 隐藏主窗口（停止杀进程）
+            // 2) 取本次想延后的分钟数，并夹在剩余额度之内
+            int wanted = RegistryHelper.LoadSnoozeMinutes();
+            if (wanted < 1) wanted = 1;
+            if (wanted > 120) wanted = 120;
+            int planned = Math.Min(wanted, available);
+
+            if (planned < wanted)
+            {
+                bool go = CustomMessageBox.ShowConfirm(
+                    $"本次想延后 {wanted} 分钟，但今晚只剩 {planned} 分钟额度。\n\n" +
+                    SleepLedger.DescribeQuota(now) + "\n\n" +
+                    $"是否按剩余额度延后 {planned} 分钟？",
+                    "额度不足", this);
+                if (!go)
+                    return;
+            }
+
+            // 3) 记账策略：倒计时正常走完 → 结束时按"实际经过"入账；
+            //    被强杀 / 关机 / 注销 → 由下次启动的启动对账补上。
+            //    两条路都会清掉"延后中"标记，因此同一次延后只会结算一次。
+            //    调试 / 测试模式跳过账本写入，避免污染真实的跨重启状态。
+            bool persist = !App.IsTestMode;
+            DateTime snoozeStart = DateTime.Now;
+            if (persist)
+                SleepLedger.BeginSnooze(snoozeStart);
+
+            // 隐藏主窗口；但继续绞杀任务管理器，防止用户顺手杀掉倒计时窗口
             HideReminder();
             StartKillTaskManager();
-            _hasSnoozedToday = true;
-            if (!App.IsTestMode)
-                RegistryHelper.MarkSnoozedToday(); // 持久化“今天已延后”，跨重启/注销有效
             _isSnoozing = true;
             trayIcon.Text = "⏰ 睡眠提醒器 - 延后中";  // 托盘提示变更
 
-            // 从注册表读取延后分钟数，默认10分钟
-            int minutes = RegistryHelper.LoadSnoozeMinutes();
-            // 保证至少1分钟，最多120分钟（已在设置窗口限制，但防御性处理）
-            if (minutes < 1) minutes = 1;
-            if (minutes > 120) minutes = 120;
-            int seconds = minutes * 60; // 转换为秒
-
+            int seconds = planned * 60;
             if (App.IsDebugMode) seconds = 10;
 
-            // 创建倒计时窗口（10分钟 = 600秒）
-            var snoozeWin = new SnoozeWindow(seconds, () =>
+            string quotaLine = SleepLedger.DescribeQuota(DateTime.Now);
+            Action? heartbeat = persist
+                ? (Action)(() => SleepLedger.WriteHeartbeat(DateTime.Now))
+                : null;
+
+            var snoozeWin = new SnoozeWindow(seconds, quotaLine, () =>
             {
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                // 用 BeginInvoke 让结算在倒计时窗口关闭之后再跑，
+                // 免得弹出的结算提示被置顶的倒计时窗口挡住。
+                System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
                 {
-                    // ---------- 延后结束 ----------
+                    // ---------- 延后结束：结清这一笔 ----------
                     _isSnoozing = false;
                     trayIcon.Text = "睡眠提醒器";       // 恢复托盘提示
+
+                    if (persist)
+                    {
+                        int booked = SleepLedger.SettleSnooze(snoozeStart, DateTime.Now);
+                        if (booked > 0)
+                        {
+                            CustomMessageBox.ShowOk(
+                                $"本次延后已结清：从额度中扣除 {booked} 分钟。\n\n" +
+                                SleepLedger.DescribeQuota(DateTime.Now),
+                                "延后结算", this);
+                        }
+                    }
+
                     if (IsInReminderInterval(DateTime.Now))
                     {
                         ShowReminder(); // 重新显示主窗口（会再次启动杀进程）
                     }
-                    else
-                    {
-                        // 已过区间，保持隐藏。
-                        // 注意：不在此处重置延后标记——今天是否已延后由注册表按日期记忆，
-                        // 跨重启/注销依然有效；新的自然日到来时由日期比较自动放行。
-                    }
-                });
-            });
+                    // 已过区间则保持隐藏（常见情形：延后跨过零点，这一夜就此结束）
+                }));
+            }, heartbeat);
 
             snoozeWin.Show();
         }

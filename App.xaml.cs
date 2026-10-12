@@ -82,6 +82,17 @@ namespace SleepReminder
 
             var mainWindow = new MainWindow();
             mainWindow.Show();
+
+            if (!IsDebugMode)
+            {
+                // 启动对账：结算上一次未正常结束的延后——关机 / 重启 / 强杀都会走到这里
+                string? settleNote = SleepLedger.ReconcileOnStartup(DateTime.Now);
+                if (!string.IsNullOrEmpty(settleNote))
+                    CustomMessageBox.ShowOk(settleNote!, "延后结算", mainWindow);
+
+                // 启动期确认：跨年放假安排、大小周基准、临近假期的实际调休
+                StartupPrompts.RunAll(mainWindow, DateTime.Now);
+            }
         }
 
         private void StartDaemon()
