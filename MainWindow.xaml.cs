@@ -18,7 +18,6 @@ namespace SleepReminder
         private System.Windows.Threading.DispatcherTimer killTaskMgrTimer;
         private NotifyIcon trayIcon;
         private ContextMenuStrip trayMenu;
-        private bool _canAttemptClose = true;
         private bool _isInInterval = false;      // 当前是否处于提醒区间
         private bool _triggeredThisInterval = false; // 当前区间是否已触发过
         private bool _isSnoozing = false;
@@ -139,7 +138,7 @@ namespace SleepReminder
         }
 
         /// <summary>
-        /// 打开预览窗口：看额度和近期作息。退出程序也在这里（只确认、不做题）。
+        /// 打开预览窗口：看额度和近期作息（只读窗口，程序不提供界面退出入口）。
         /// </summary>
         private void OnPreview(object sender, EventArgs e)
         {
@@ -461,34 +460,5 @@ namespace SleepReminder
                 return time.TimeOfDay >= start || time.TimeOfDay <= end;
         }
 
-        private void CloseReminder_Click(object sender, RoutedEventArgs e)
-        {
-            // 如果今天已经答错过，直接提示并返回
-            if (!_canAttemptClose)
-            {
-                CustomMessageBox.ShowOk("您已经答错过一次，无法再通过答题关闭窗口！", "提示", this);
-                return;
-            }
-
-            // 创建答题窗口实例
-            var answerWin = new AnswerWindow();
-
-            // 以模态对话框方式显示，并获取返回结果
-            bool? result = answerWin.ShowDialog();
-
-            // 判断用户是否答对了所有题（包括Boss题）
-            if (result == true && answerWin.IsAllCorrect)
-            {
-                // 全部正确 → 关闭提醒（隐藏霸屏）
-                HideReminder();
-            }
-            else if (result == false && answerWin.HasWrongAnswer)
-            {
-                // 有题目答错 → 取消本次关闭机会
-                _canAttemptClose = false;
-                CustomMessageBox.ShowOk("您有题目答错，本次提醒无法再通过答题关闭！", "提示", this);
-            }
-            // 如果用户点了取消（没提交），则不做任何操作
-        }
     }
 }

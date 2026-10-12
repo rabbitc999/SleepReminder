@@ -5,7 +5,6 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using Application = System.Windows.Application;
 
 namespace SleepReminder
 {
@@ -19,7 +18,7 @@ namespace SleepReminder
     /// 右栏是作息——从今天起若干天的"上班 / 休息"判定，并标出依据
     /// （法定放假 / 调休 / 按周制作息），方便核对单休、大小周与调休是否正确。
     ///
-    /// 窗口底部还提供"退出程序"：退出<b>不做任何题</b>，仅一次确认。
+    /// 窗口是只读的，底部只有一个"刷新"——程序不提供任何界面退出入口。
     /// </summary>
     public partial class QuotaPreviewWindow : Window
     {
@@ -222,22 +221,6 @@ namespace SleepReminder
         private void Refresh_Click(object sender, RoutedEventArgs e)
         {
             Reload();
-        }
-
-        /// <summary>
-        /// 退出程序：只做一次确认，<b>不做题</b>。
-        /// 退出走的是正常退出通道，守护进程收到信号后不会再把它拉起来。
-        /// </summary>
-        private void Exit_Click(object sender, RoutedEventArgs e)
-        {
-            bool ok = CustomMessageBox.ShowConfirm(
-                "确认退出睡眠提醒器吗？\n退出后今晚不会再提醒，需要重新运行程序才能恢复。",
-                "退出确认", this);
-            if (!ok)
-                return;
-
-            Close();
-            Application.Current.Shutdown();
         }
     }
 }

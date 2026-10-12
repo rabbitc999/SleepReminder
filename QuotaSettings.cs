@@ -39,7 +39,7 @@ namespace SleepReminder
         private static QuotaSettings? _current;
         private static readonly object Gate = new object();
 
-        /// <summary>工作日默认白送的固定延后分钟数。</summary>
+        /// <summary>固定额度：每夜白送的分钟数（默认值）。</summary>
         public const int DefaultFixedMinutesPerNight = 10;
 
         /// <summary>附加池默认容量（分钟 / 滚动 7 天）。</summary>
@@ -64,7 +64,7 @@ namespace SleepReminder
         /// </summary>
         public DateTime? BigWeekAnchorMonday { get; set; }
 
-        /// <summary>每夜白送的固定延后分钟数。</summary>
+        /// <summary>固定额度：每夜白送的分钟数。</summary>
         public int FixedMinutesPerNight { get; set; } = DefaultFixedMinutesPerNight;
 
         /// <summary>附加池容量（分钟 / 滚动 7 天）。</summary>

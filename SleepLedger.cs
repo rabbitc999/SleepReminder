@@ -323,7 +323,10 @@ namespace SleepReminder
 
         /// <summary>
         /// 生成给延后界面显示的额度摘要，例如
-        /// <c>固定延后 10 分钟 ｜ 本周可附加 42 分钟 ｜ 宽松夜（系数 0.5）</c>。
+        /// <c>固定额度剩 10 分钟 ｜ 附加池剩 42 分钟 ｜ 宽松夜（系数 0.5）</c>。
+        ///
+        /// 用词与“设置”窗口的“固定额度 / 附加池”保持一致；两个数字都明确写成
+        /// “剩多少”（而非设置值），免得被误读成“一次能延后多久”。
         /// </summary>
         /// <param name="now">当前时刻。</param>
         /// <returns>单行摘要文本。</returns>
@@ -333,7 +336,7 @@ namespace SleepReminder
             int fixedLeft = Math.Max(0, QuotaSettings.Current.FixedMinutesPerNight - GetTonightSnoozedMinutes(now));
             string tag = IsRelaxedNight(nightDate) ? "宽松夜" : "紧张夜";
             return string.Format(CultureInfo.InvariantCulture,
-                "固定延后 {0} 分钟 ｜ 本周可附加 {1} 分钟 ｜ {2}（系数 {3:0.#}）",
+                "固定额度剩 {0} 分钟 ｜ 附加池剩 {1} 分钟 ｜ {2}（系数 {3:0.#}）",
                 fixedLeft, GetPoolRemaining(now), tag, GetNightFactor(nightDate));
         }
 

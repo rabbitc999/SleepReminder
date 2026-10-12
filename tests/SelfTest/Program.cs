@@ -208,7 +208,7 @@ namespace SleepReminder.SelfTest
 
             string summary = SleepLedger.DescribeQuota(tense);
             Check("额度摘要含固定与附加字段",
-                summary.Contains("固定延后") && summary.Contains("本周可附加"), summary);
+                summary.Contains("固定额度剩") && summary.Contains("附加池剩"), summary);
 
             Console.WriteLine();
         }

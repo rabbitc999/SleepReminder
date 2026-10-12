@@ -71,9 +71,6 @@
             <Button x:Name="btnRefresh" Content="刷新" Width="90" Height="38" Margin="0,0,10,0"
                     Foreground="White" Background="#37474F" BorderBrush="#546E7A" BorderThickness="1"
                     Cursor="Hand" Click="Refresh_Click"/>
-            <Button x:Name="btnExit" Content="退出程序" Width="110" Height="38" Margin="0,0,10,0"
-                    Foreground="White" Background="#D32F2F" BorderBrush="#B71C1C" BorderThickness="1"
-                    Cursor="Hand" Click="Exit_Click"/>
         </StackPanel>
     </Grid>
 </Window>
