@@ -239,10 +239,5 @@ namespace SleepReminder
             Close();
             Application.Current.Shutdown();
         }
-
-        private void Close_Click(object sender, RoutedEventArgs e)
-        {
-            Close();
-        }
     }
 }
