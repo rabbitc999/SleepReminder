@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     SleepReminder 正式（Release）版本部署脚本
 
