@@ -132,12 +132,19 @@ namespace SleepReminder
             trayIcon.Visible = true;
 
             trayMenu = new ContextMenuStrip();
-            trayMenu.Items.Add("设置提醒时间", null, OnSetTime);
-            trayMenu.Items.Add("设置延后时长", null, OnSetSnooze);
-            trayMenu.Items.Add("额度设置", null, OnSetQuota);
+            trayMenu.Items.Add("预览", null, OnPreview);
+            trayMenu.Items.Add("设置", null, OnSetSettings);
             trayMenu.Items.Add("提醒外观", null, OnSetAppearance);
-            trayMenu.Items.Add("退出", null, OnExitWithQuiz); // 新增
             trayIcon.ContextMenuStrip = trayMenu;
+        }
+
+        /// <summary>
+        /// 打开预览窗口：看额度和近期作息。退出程序也在这里（只确认、不做题）。
+        /// </summary>
+        private void OnPreview(object sender, EventArgs e)
+        {
+            var win = new QuotaPreviewWindow();
+            win.ShowDialog();
         }
 
         /// <summary>打开提醒外观设置窗口（背景图片与页面文字，改完立即生效）。</summary>
@@ -150,56 +157,22 @@ namespace SleepReminder
             }
         }
 
-        /// <summary>打开额度设置窗口（周制与额度参数，受"每周一次"的修改锁约束）。</summary>
-        private void OnSetQuota(object sender, EventArgs e)
+        /// <summary>
+        /// 打开统一设置窗口：提醒时间、延后时长、额度与周制都在这里改。
+        /// 提醒时间与延后时长不受限制，额度组由窗口内部按"每周一次"的锁自行置灰。
+        /// </summary>
+        private void OnSetSettings(object sender, EventArgs e)
         {
             if (_isSnoozing)
             {
-                CustomMessageBox.ShowOk("延后期间不能修改额度设置！", "提示", this);
+                CustomMessageBox.ShowOk("延后期间不能修改设置！", "提示", this);
                 return;
             }
 
-            var win = new QuotaSettingsWindow();
-            win.ShowDialog();
-        }
-
-        private void OnExitWithQuiz(object sender, EventArgs e)
-        {
-            var answerWin = new AnswerWindow();
-            bool? result = answerWin.ShowDialog();
-
-            if (result == true && answerWin.IsAllCorrect)
+            var win = new SettingsWindow();
+            if (win.ShowDialog() == true)
             {
-                Application.Current.Shutdown();
-            }
-            else
-            {
-                CustomMessageBox.ShowOk("答题失败或取消，无法退出！", "提示", this);
-            }
-        }
-
-        private void OnSetSnooze(object sender, EventArgs e)
-        {
-            if (_isSnoozing)
-            {
-                CustomMessageBox.ShowOk("延后期间不能修改延后时长！", "提示", this);
-                return;
-            }
-            var win = new SnoozeSettingWindow();
-            win.ShowDialog(); // 用户点击确定后已自动保存
-        }
-
-        private void OnSetTime(object sender, EventArgs e)
-        {
-            if (_isSnoozing)
-            {
-                CustomMessageBox.ShowOk("延后期间不能修改提醒时间！", "提示", this);
-                return;
-            }
-            var setWin = new SetTimeWindow();
-            if (setWin.ShowDialog() == true)
-            {
-                // 保存操作已在SetTimeWindow中完成，只需重置提醒状态
+                // 提醒时间可能被改过，重启定时器让新区间立即生效
                 SetupTimer();
             }
         }

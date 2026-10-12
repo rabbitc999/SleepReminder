@@ -41,6 +41,7 @@ namespace SleepReminder.SelfTest
             SectionC_LedgerQuota();
             SectionD_StartupReconcile();
             SectionE_Appearance();
+            SectionF_PreviewData();
 
             ResetStore();
 
@@ -294,6 +295,52 @@ namespace SleepReminder.SelfTest
             AppearanceSettings.Reload();
             Eq("文件存在 → 背景图可用", AppearanceSettings.Current.HasUsableImage, true);
             try { File.Delete(tmp); } catch { /* 删不掉不影响测试 */ }
+
+            Console.WriteLine();
+        }
+
+        // ---------- F. 预览数据 ----------
+
+        /// <summary>验证"预览"窗口用到的两块数据：作息判定依据与近 7 夜摘要。</summary>
+        private static void SectionF_PreviewData()
+        {
+            ResetStore();
+            Console.WriteLine("[F] 预览数据：作息判定依据 / 近期作息 / 近 7 夜摘要");
+
+            // 判定依据：能解释"这天凭什么休 / 上班"
+            WorkdayCalendar.DayInfo nat = WorkdayCalendar.GetDayInfo(D("2026-10-01"));
+            Eq("10-01 休息", nat.IsWorkday, false);
+            Eq("10-01 依据=法定放假", nat.Reason, "法定放假");
+
+            WorkdayCalendar.DayInfo makeup = WorkdayCalendar.GetDayInfo(D("2026-10-10"));
+            Eq("10-10 上班", makeup.IsWorkday, true);
+            Eq("10-10 依据=调休上班", makeup.Reason, "调休 / 单位安排上班");
+
+            WorkdayCalendar.DayInfo plain = WorkdayCalendar.GetDayInfo(D("2026-10-14"));
+            Eq("10-14 上班", plain.IsWorkday, true);
+            Eq("10-14 依据=按周制作息", plain.Reason, "按周制作息");
+
+            // 近期作息：今天排最前，天数正确
+            List<WorkdayCalendar.DayInfo> upcoming = WorkdayCalendar.GetUpcomingDays(D("2026-10-12"), 7);
+            Eq("近期作息返回 7 天", upcoming.Count, 7);
+            Eq("近期作息第一天是今天", upcoming[0].Date, D("2026-10-12"));
+            Eq("近期作息最后一天是 10-18", upcoming[6].Date, D("2026-10-18"));
+            Eq("空请求返回空列表", WorkdayCalendar.GetUpcomingDays(D("2026-10-12"), 0).Count, 0);
+
+            // 近 7 夜摘要：日期升序，且带上“是否宽松夜”
+            SleepLedger.RecordSnooze(new DateTime(2026, 10, 10, 23, 30, 0), 10);
+            SleepLedger.RecordSnooze(new DateTime(2026, 10, 12, 23, 30, 0), 12);
+
+            List<SleepLedger.NightSummary> nights =
+                SleepLedger.GetRecentNights(new DateTime(2026, 10, 12, 23, 40, 0), 7);
+            Eq("近 7 夜返回 2 笔", nights.Count, 2);
+            Eq("第一笔是 10-10", nights[0].NightDate, D("2026-10-10"));
+            Eq("10-10 判为宽松夜", nights[0].IsRelaxed, true);
+            Eq("10-10 延后 10 分钟", nights[0].TotalMinutes, 10);
+            Eq("第二笔是 10-12", nights[1].NightDate, D("2026-10-12"));
+            Eq("10-12 判为紧张夜", nights[1].IsRelaxed, false);
+            Eq("10-12 延后 12 分钟", nights[1].TotalMinutes, 12);
+            Eq("窗口外不返回", SleepLedger.GetRecentNights(new DateTime(2026, 10, 30, 23, 30, 0), 7).Count, 0);
 
             Console.WriteLine();
         }

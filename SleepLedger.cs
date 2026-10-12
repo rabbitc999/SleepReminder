@@ -165,6 +165,50 @@ namespace SleepReminder
 
         // ---------- 额度查询 ----------
 
+        /// <summary>给界面展示用的单夜摘要。</summary>
+        public sealed class NightSummary
+        {
+            /// <summary>该笔记录归属的"夜"（对应的自然日）。</summary>
+            public DateTime NightDate { get; init; }
+
+            /// <summary>该夜累计延后分钟数。</summary>
+            public int TotalMinutes { get; init; }
+
+            /// <summary>该夜从附加池支取的分钟数（已含夜系数）。</summary>
+            public int PoolMinutes { get; init; }
+
+            /// <summary>该夜是否为宽松夜。</summary>
+            public bool IsRelaxed { get; init; }
+        }
+
+        /// <summary>
+        /// 取最近若干夜（含本夜）的摘要，按日期升序，供"额度预览"窗口列表使用。
+        /// 窗口内没有记录的夜会缺失，由调用方自行补零或跳过。
+        /// </summary>
+        /// <param name="now">当前时刻。</param>
+        /// <param name="nights">要回溯的夜数，含本夜。</param>
+        /// <returns>最近的夜摘要列表（可能为空）。</returns>
+        public static List<NightSummary> GetRecentNights(DateTime now, int nights)
+        {
+            if (nights <= 0)
+                return new List<NightSummary>();
+
+            DateTime nightDate = GetNightDate(now);
+            DateTime from = nightDate.AddDays(-(nights - 1));
+
+            return LoadLog()
+                .Where(r => r.NightDate >= from && r.NightDate <= nightDate)
+                .OrderBy(r => r.NightDate)
+                .Select(r => new NightSummary
+                {
+                    NightDate = r.NightDate,
+                    TotalMinutes = r.TotalMinutes,
+                    PoolMinutes = r.PoolMinutes,
+                    IsRelaxed = IsRelaxedNight(r.NightDate)
+                })
+                .ToList();
+        }
+
         /// <summary>取今晚已经延后的总分钟数。</summary>
         /// <param name="now">当前时刻。</param>
         /// <returns>今晚累计延后分钟数。</returns>

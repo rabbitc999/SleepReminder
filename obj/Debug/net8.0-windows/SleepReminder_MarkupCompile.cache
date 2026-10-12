@@ -10,11 +10,11 @@ none
 false
 TRACE;DEBUG;NET;NET8_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER;WINDOWS7_0_OR_GREATER
 D:\Desktop\Workspace\SleepReminder\App.xaml
-9750427813
+81293140227
 1158455007
-18-178554607
+17-2034328745
 2081446970725
-AnswerWindow.xaml;AppearanceSettingsWindow.xaml;CustomMessageBox.xaml;HolidayAdjustWindow.xaml;MainWindow.xaml;QuotaSettingsWindow.xaml;SetTimeWindow.xaml;SnoozeSettingWindow.xaml;SnoozeWindow.xaml;
+AnswerWindow.xaml;AppearanceSettingsWindow.xaml;CustomMessageBox.xaml;HolidayAdjustWindow.xaml;MainWindow.xaml;QuotaPreviewWindow.xaml;SettingsWindow.xaml;SnoozeWindow.xaml;
 
 False
 

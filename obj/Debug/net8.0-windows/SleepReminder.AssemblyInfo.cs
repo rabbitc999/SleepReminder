@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SleepReminder")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+431bfa018053c8560b40f32cd73c002206520ae5")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c7d7d0303aaf8127bfd39da092ba6456d0c40c51")]
 [assembly: System.Reflection.AssemblyProductAttribute("SleepReminder")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SleepReminder")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -234,6 +234,58 @@ namespace SleepReminder
             return IsRestDay(nightDate.Date.AddDays(1));
         }
 
+        // ---------- 判定结果（带依据，供界面解释） ----------
+
+        /// <summary>某一天的作息判定结果，附带判定依据。</summary>
+        public sealed class DayInfo
+        {
+            /// <summary>被判定的日期。</summary>
+            public DateTime Date { get; init; }
+
+            /// <summary>该日是否需要上班。</summary>
+            public bool IsWorkday { get; init; }
+
+            /// <summary>判定依据的可读说明，例如"法定放假""按周制作息"。</summary>
+            public string Reason { get; init; } = string.Empty;
+        }
+
+        /// <summary>
+        /// 取某一天的作息判定及依据，便于界面回答"这天凭什么休 / 上班"。
+        /// </summary>
+        /// <param name="date">要判定的日期。</param>
+        /// <returns>带依据的判定结果。</returns>
+        public static DayInfo GetDayInfo(DateTime date)
+        {
+            EnsureInitialized();
+            DateTime d = date.Date;
+
+            if (WorkDays.Contains(d))
+                return new DayInfo { Date = d, IsWorkday = true, Reason = "调休 / 单位安排上班" };
+            if (RestDays.Contains(d))
+                return new DayInfo { Date = d, IsWorkday = false, Reason = "法定放假" };
+
+            bool work = IsWorkdayByWeeklyPattern(d);
+            return new DayInfo { Date = d, IsWorkday = work, Reason = "按周制作息" };
+        }
+
+        /// <summary>
+        /// 取从今天起连续若干天的作息判定，供"预览"窗口列出来。<b>今天排在最前</b>。
+        /// </summary>
+        /// <param name="today">起始日期（通常为今天）。</param>
+        /// <param name="days">要列出的天数。</param>
+        /// <returns>按日期升序的判定结果。</returns>
+        public static List<DayInfo> GetUpcomingDays(DateTime today, int days)
+        {
+            var list = new List<DayInfo>();
+            if (days <= 0)
+                return list;
+
+            for (int i = 0; i < days; i++)
+                list.Add(GetDayInfo(today.Date.AddDays(i)));
+
+            return list;
+        }
+
         // ---------- 跨年维护 ----------
 
         /// <summary>取外部覆盖文件的完整路径（与 exe 同目录）。</summary>
