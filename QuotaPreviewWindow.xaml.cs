@@ -58,15 +58,19 @@ namespace SleepReminder
             int poolUsed = SleepLedger.GetPoolUsed(now);
             int poolLeft = SleepLedger.GetPoolRemaining(now);
             int available = SleepLedger.GetAvailableMinutes(now);
+            // 本夜真正动了附加池的分钟数（已含夜系数折算）——与"本夜已延后"不一定相等，
+            // 固定额度以内的部分根本不扣池子，两者之差就是让用户误解的来源。
+            int tonightPool = SleepLedger.GetRecentNights(now, 1).FirstOrDefault()?.PoolMinutes ?? 0;
 
             var sb = new StringBuilder();
             sb.AppendLine($"今夜归属：{nightDate:yyyy-MM-dd}（{WeekdayName(nightDate.DayOfWeek)}）");
             sb.AppendLine($"夜的类型：{(relaxed ? "宽松夜" : "紧张夜")}（系数 {SleepLedger.GetNightFactor(nightDate):0.#}）");
             sb.AppendLine($"本夜已延后：{tonight} 分钟 ／ 单夜封顶 {cap} 分钟");
+            sb.AppendLine($"　└ 其中动用附加池：{tonightPool} 分钟（固定额度以内的部分不扣池）");
             sb.AppendLine();
             sb.AppendLine($"固定额度：{settings.FixedMinutesPerNight} 分钟 / 夜，本夜剩余 {fixedLeft} 分钟");
             sb.AppendLine($"附加池：{settings.WeeklyPoolMinutes} 分钟 / 周（滚动 7 天）");
-            sb.AppendLine($"　　本周已用 {poolUsed} 分钟，剩余 {poolLeft} 分钟");
+            sb.AppendLine($"　　本周已从池中支取 {poolUsed} 分钟，剩余 {poolLeft} 分钟");
             sb.AppendLine();
             sb.AppendLine($"此刻最多还能延后：{available} 分钟");
             sb.AppendLine($"额度设置：{QuotaSettings.DescribeLock(now)}");
@@ -88,10 +92,13 @@ namespace SleepReminder
             double[] widths = { 78, 46, 50, 52, 56 };
 
             spNights.Children.Clear();
+            spNights.Children.Add(Hint(
+                "「延后」= 本夜累计延后分钟数；「池扣」= 其中真正动用附加池的分钟数" +
+                "（固定额度以内的部分不扣池子）。"));
             spNights.Children.Add(BuildRow(new[]
             {
                 ("日期", HeaderBrush), ("星期", HeaderBrush), ("夜型", HeaderBrush),
-                ("延后", HeaderBrush), ("池消耗", HeaderBrush)
+                ("延后", HeaderBrush), ("池扣", HeaderBrush)
             }, widths));
 
             List<SleepLedger.NightSummary> nights = SleepLedger.GetRecentNights(now, RecentNights);
