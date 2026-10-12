@@ -418,24 +418,18 @@ namespace SleepReminder
 
             var snoozeWin = new SnoozeWindow(seconds, quotaLine, () =>
             {
-                // 用 BeginInvoke 让结算在倒计时窗口关闭之后再跑，
-                // 免得弹出的结算提示被置顶的倒计时窗口挡住。
+                // 用 BeginInvoke 等倒计时窗口真正关闭之后再收尾，
+                // 免得重新出现的霸屏被还没关掉的倒计时窗口压在下面。
                 System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
                 {
-                    // ---------- 延后结束：结清这一笔 ----------
+                    // ---------- 延后结束：静默结清这一笔，直接回霸屏 ----------
+                    // 账照记（按实际经过分钟入账 + 清"延后中"锚点），只是不再弹结算窗打扰。
                     _isSnoozing = false;
                     trayIcon.Text = "睡眠提醒器";       // 恢复托盘提示
 
                     if (persist)
                     {
-                        int booked = SleepLedger.SettleSnooze(snoozeStart, DateTime.Now);
-                        if (booked > 0)
-                        {
-                            CustomMessageBox.ShowOk(
-                                $"本次延后已结清：从额度中扣除 {booked} 分钟。\n\n" +
-                                SleepLedger.DescribeQuota(DateTime.Now),
-                                "延后结算", this);
-                        }
+                        SleepLedger.SettleSnooze(snoozeStart, DateTime.Now);
                     }
 
                     if (IsInReminderInterval(DateTime.Now))
