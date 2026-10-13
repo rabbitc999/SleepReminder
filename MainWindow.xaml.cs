@@ -411,12 +411,16 @@ namespace SleepReminder
             int seconds = planned * 60;
             if (App.IsDebugMode) seconds = 10;
 
-            string quotaLine = SleepLedger.DescribeQuota(DateTime.Now);
+            // 倒计时窗口里的两行额度文本都按"本次已流逝秒数"实时算：
+            // 固定额度因此会随倒计时逐秒递减，而不是停在进入延后那一刻的快照上。
             Action? heartbeat = persist
                 ? (Action)(() => SleepLedger.WriteHeartbeat(DateTime.Now))
                 : null;
 
-            var snoozeWin = new SnoozeWindow(seconds, quotaLine, () =>
+            var snoozeWin = new SnoozeWindow(seconds,
+                elapsed => SleepLedger.DescribeLiveFixedQuota(snoozeStart, elapsed),
+                elapsed => SleepLedger.DescribeLiveSummary(snoozeStart, elapsed),
+                () =>
             {
                 // 用 BeginInvoke 等倒计时窗口真正关闭之后再收尾，
                 // 免得重新出现的霸屏被还没关掉的倒计时窗口压在下面。

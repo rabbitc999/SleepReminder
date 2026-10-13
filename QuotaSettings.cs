@@ -17,7 +17,13 @@ namespace SleepReminder
         SingleRest,
 
         /// <summary>大小周：大周双休、小周单休，逐周交替。</summary>
-        BigSmallWeek
+        BigSmallWeek,
+
+        /// <summary>
+        /// 待业：每天都是"放假"，因此每一夜都是宽松夜。
+        /// 该模式下不再看节假日 / 调休表，"要上班的日子"这个概念不存在。
+        /// </summary>
+        Unemployed
     }
 
     /// <summary>
@@ -220,6 +226,7 @@ namespace SleepReminder
         {
             string pattern = Pattern switch
             {
+                WorkPattern.Unemployed => "待业（每天都是放假）",
                 WorkPattern.SingleRest => "单休（只休周日）",
                 WorkPattern.BigSmallWeek => BigWeekAnchorMonday.HasValue
                     ? $"大小周（大周基准 {BigWeekAnchorMonday.Value:yyyy-MM-dd}）"

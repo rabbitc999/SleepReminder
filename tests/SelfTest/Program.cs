@@ -8,8 +8,9 @@ namespace SleepReminder.SelfTest
     /// <summary>
     /// SleepReminder 逻辑层的离屏回归自测。
     ///
-    /// 覆盖四块纯逻辑：工作日日历（节假日 / 调休 / 周制）、额度设置（周键与每周一次的修改锁）、
-    /// 额度账本（夜归属 / 固定+附加计价 / 封顶 / 滚动 7 天 / 启动对账）、提醒外观（背景图与文字）。
+    /// 覆盖六块纯逻辑：工作日日历（节假日 / 调休 / 周制 / 待业）、额度设置（周键与每周一次的修改锁）、
+    /// 额度账本（夜归属 / 固定+附加计价 / 封顶 / 滚动 7 天 / 启动对账）、提醒外观（背景图与文字）、
+    /// 预览数据，以及延后倒计时的实时额度投影。
     ///
     /// 自测会读写 <c>HKCU\Software\SleepReminder</c>，因此运行前请先备份该键，
     /// 运行结束后由外部脚本还原。进程退出码：0 = 全部通过，1 = 存在失败。
@@ -42,6 +43,8 @@ namespace SleepReminder.SelfTest
             SectionD_StartupReconcile();
             SectionE_Appearance();
             SectionF_PreviewData();
+            SectionG_UnemployedMode();
+            SectionH_LiveSnoozeQuota();
 
             ResetStore();
 
@@ -345,7 +348,110 @@ namespace SleepReminder.SelfTest
             Console.WriteLine();
         }
 
+        // ---------- G. 待业模式 ----------
+
+        /// <summary>验证"待业模式"：每天都是放假，压过调休 / 放假表，因此恒为宽松夜。</summary>
+        private static void SectionG_UnemployedMode()
+        {
+            ResetStore();
+            Console.WriteLine("[G] 待业模式：每天都是放假 / 恒为宽松夜");
+
+            QuotaSettings.Current.Pattern = WorkPattern.Unemployed;
+
+            Eq("待业：普通工作日 10-14 也休息", WorkdayCalendar.IsRestDay(D("2026-10-14")), true);
+            Eq("待业：调休上班日 10-10 也休息", WorkdayCalendar.IsRestDay(D("2026-10-10")), true);
+            Eq("待业：法定假期 10-01 自然休息", WorkdayCalendar.IsRestDay(D("2026-10-01")), true);
+            Eq("待业：任何一天都不上班", WorkdayCalendar.IsWorkday(D("2026-10-14")), false);
+
+            Eq("待业：工作日次日 → 宽松夜", WorkdayCalendar.IsRelaxedNight(D("2026-10-14")), true);
+            Eq("待业：夜间系数 0.5", SleepLedger.GetNightFactor(D("2026-10-14")), 0.5);
+            Eq("待业：单夜封顶按宽松夜 60", SleepLedger.GetNightCap(D("2026-10-14")), 60);
+
+            WorkdayCalendar.DayInfo info = WorkdayCalendar.GetDayInfo(D("2026-10-14"));
+            Eq("待业：休息", info.IsWorkday, false);
+            Eq("待业：判定依据=待业模式", info.Reason, "待业模式（每天放假）");
+
+            List<WorkdayCalendar.DayInfo> week = WorkdayCalendar.GetUpcomingDays(D("2026-10-12"), 7);
+            int workDays = 0;
+            foreach (WorkdayCalendar.DayInfo d in week)
+            {
+                if (d.IsWorkday)
+                    workDays++;
+            }
+            Eq("待业：未来 7 天里上班 0 天", workDays, 0);
+
+            string described = QuotaSettings.Current.Describe();
+            Check("待业：设置摘要标明待业", described.Contains("待业"), described);
+
+            // 切回双休：待业只压判定、不改数据，节假日与调休应立即恢复生效
+            QuotaSettings.Current.Pattern = WorkPattern.DoubleRest;
+            Eq("切回双休：调休日 10-10 恢复上班", WorkdayCalendar.IsWorkday(D("2026-10-10")), true);
+            Eq("切回双休：工作日 10-14 恢复上班", WorkdayCalendar.IsWorkday(D("2026-10-14")), true);
+            Eq("切回双休：10-14 依据回到周制",
+                WorkdayCalendar.GetDayInfo(D("2026-10-14")).Reason, "按周制作息");
+
+            Console.WriteLine();
+        }
+
+        // ---------- H. 延后倒计时的实时额度 ----------
+
+        /// <summary>
+        /// 验证倒计时窗口用到的实时投影：固定额度随已流逝秒数递减、附加池按已流逝整分钟支取，
+        /// 且这份投影<b>只读不写</b>；倒计时归零时的投影值应与随后结算出的账本一致。
+        /// </summary>
+        private static void SectionH_LiveSnoozeQuota()
+        {
+            ResetStore();
+            Console.WriteLine("[H] 延后倒计时：固定额度实时递减（纯投影，不写账）");
+
+            // 10-10 是周六、次日休息 → 宽松夜（系数 0.5、封顶 60）
+            DateTime relaxed = new DateTime(2026, 10, 10, 23, 30, 0);
+            Eq("起始：固定额度剩 10:00",
+                SleepLedger.DescribeLiveFixedQuota(relaxed, 0), "固定额度剩 10:00");
+            Eq("起始：附加池 60、标为宽松夜",
+                SleepLedger.DescribeLiveSummary(relaxed, 0), "附加池剩 60 分钟 ｜ 宽松夜（系数 0.5）");
+
+            Eq("流逝 1 分 30 秒：固定额度剩 08:30",
+                SleepLedger.DescribeLiveFixedQuota(relaxed, 90), "固定额度剩 08:30");
+            Eq("流逝 2 分钟：固定额度剩 08:00",
+                SleepLedger.DescribeLiveFixedQuota(relaxed, 120), "固定额度剩 08:00");
+            Eq("流逝 10 分钟：固定额度归零",
+                SleepLedger.DescribeLiveFixedQuota(relaxed, 600), "固定额度剩 00:00");
+            Eq("流逝 11 分钟：超出 1 分钟 × 0.5 向上取整 → 池剩 59",
+                SleepLedger.DescribeLiveSummary(relaxed, 660), "附加池剩 59 分钟（已开始支取） ｜ 宽松夜（系数 0.5）");
+
+            Eq("实时投影不写本夜账", SleepLedger.GetTonightSnoozedMinutes(relaxed), 0);
+            Eq("实时投影不写心跳", SleepLedger.GetLastHeartbeat().HasValue, false);
+
+            // 紧张夜：超出部分不打折（系数 1）
+            DateTime tense = new DateTime(2026, 10, 12, 23, 30, 0);
+            string tenseLine = SleepLedger.DescribeLiveSummary(tense, 660);
+            Check("紧张夜：超出 1 分钟全额扣池（池剩 59）", tenseLine.Contains("附加池剩 59"), tenseLine);
+            Check("紧张夜：标注为紧张夜", tenseLine.Contains("紧张夜"), tenseLine);
+
+            // 本夜已被前一次延后吃掉一部分固定额度时，本次倒计时从那部分之后起算
+            SleepLedger.RecordSnooze(tense, 4);
+            Eq("本夜已用 4 分钟：实时剩余从 06:00 起算",
+                SleepLedger.DescribeLiveFixedQuota(tense, 0), "固定额度剩 06:00");
+            Eq("本夜已用 4 分钟：再流逝 60 秒 → 05:00",
+                SleepLedger.DescribeLiveFixedQuota(tense, 60), "固定额度剩 05:00");
+            Eq("本夜已用 4 分钟：池仍未被动用", SleepLedger.GetPoolUsed(tense), 0);
+
+            // 归零时的投影 = 结算后的账本（10-16 周五夜、次日周六休息 → 宽松夜）
+            DateTime settleNight = new DateTime(2026, 10, 16, 23, 30, 0);
+            string projected = SleepLedger.DescribeLiveSummary(settleNight, 25 * 60);
+            Check("归零时的投影：池剩 52（超出 15 × 0.5 → 8）",
+                projected.Contains("附加池剩 52"), projected);
+
+            SleepLedger.RecordSnooze(settleNight, 25);
+            Eq("结算后本夜延后 25 分钟", SleepLedger.GetTonightSnoozedMinutes(settleNight), 25);
+            Eq("结算后池剩与倒计时归零时的投影一致", SleepLedger.GetPoolRemaining(settleNight), 52);
+
+            Console.WriteLine();
+        }
+
         // ---------- 工具 ----------
+
         /// <summary>把 yyyy-MM-dd 解析成日期。</summary>
         private static DateTime D(string text)
         {

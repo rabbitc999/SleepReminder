@@ -161,7 +161,10 @@ namespace SleepReminder
             }
 
             string hint = $"从今天起 {UpcomingDays} 天内共 {restCount} 天休息。";
-            if (QuotaSettings.Current.Pattern != WorkPattern.DoubleRest)
+            WorkPattern pattern = QuotaSettings.Current.Pattern;
+            if (pattern == WorkPattern.Unemployed)
+                hint += "待业模式：每天都是放假，因此每一夜都是宽松夜；节假日 / 调休表在此时不参与判定。";
+            else if (pattern != WorkPattern.DoubleRest)
                 hint += "单休 / 大小周按周制推演；临近假期可在启动提示里改成单位实际作息。";
 
             tbRestHint.Text = hint;

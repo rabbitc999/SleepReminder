@@ -340,6 +340,72 @@ namespace SleepReminder
                 fixedLeft, GetPoolRemaining(now), tag, GetNightFactor(nightDate));
         }
 
+        /// <summary>
+        /// 计算"延后进行中"的<b>本夜固定额度剩余秒数</b>：本夜剩余固定额度扣掉本次已流逝的秒数，
+        /// 使界面上的固定额度能随倒计时逐秒递减，而不是停在进入延后那一刻的快照上。
+        ///
+        /// <b>纯计算，不写账本</b>——真正的入账仍由 <see cref="SettleSnooze"/> 在倒计时结束时
+        /// 一次性完成；因此倒计时归零时（流逝秒数 = 本次计划秒数）这里算出的余额，
+        /// 与随后 <see cref="SettleSnooze"/> 入账后的余额一致。
+        /// </summary>
+        /// <param name="snoozeStart">本次延后的开始时刻（用于归属"夜"）。</param>
+        /// <param name="elapsedSeconds">本次延后已经流逝的秒数。</param>
+        /// <returns>固定额度剩余秒数，最小为 0。</returns>
+        public static int GetLiveFixedQuotaSeconds(DateTime snoozeStart, int elapsedSeconds)
+        {
+            int fixedLeft = Math.Max(0,
+                QuotaSettings.Current.FixedMinutesPerNight - GetTonightSnoozedMinutes(snoozeStart));
+            return Math.Max(0, fixedLeft * 60 - Math.Max(0, elapsedSeconds));
+        }
+
+        /// <summary>
+        /// 计算"延后进行中"本次按夜系数计入附加池的分钟数（口径与 <see cref="RecordSnooze"/> 一致：
+        /// 先吃固定额度，超出部分才按系数折算）。纯计算，不写账本。
+        /// </summary>
+        /// <param name="snoozeStart">本次延后的开始时刻。</param>
+        /// <param name="elapsedSeconds">本次延后已经流逝的秒数。</param>
+        /// <returns>本次已计入附加池的分钟数。</returns>
+        private static int GetLivePoolCost(DateTime snoozeStart, int elapsedSeconds)
+        {
+            QuotaSettings s = QuotaSettings.Current;
+            int settled = GetTonightSnoozedMinutes(snoozeStart);
+            int booked = Math.Min(Math.Max(0, elapsedSeconds) / 60, GetAvailableMinutes(snoozeStart));
+            int fromFixed = Math.Min(booked, Math.Max(0, s.FixedMinutesPerNight - settled));
+            int excess = booked - fromFixed;
+            return excess <= 0 ? 0 : (int)Math.Ceiling(excess * GetNightFactor(GetNightDate(snoozeStart)));
+        }
+
+        /// <summary>
+        /// 生成延后倒计时窗口上方那行<b>固定额度倒计时</b>，例如 <c>固定额度剩 07:23</c>；
+        /// 固定额度被本次延后耗尽后显示 <c>固定额度剩 00:00</c>，此后开始动用附加池。
+        /// </summary>
+        /// <param name="snoozeStart">本次延后的开始时刻。</param>
+        /// <param name="elapsedSeconds">本次延后已经流逝的秒数。</param>
+        /// <returns>单行倒计时文本。</returns>
+        public static string DescribeLiveFixedQuota(DateTime snoozeStart, int elapsedSeconds)
+        {
+            int left = GetLiveFixedQuotaSeconds(snoozeStart, elapsedSeconds);
+            return string.Format(CultureInfo.InvariantCulture, "固定额度剩 {0:D2}:{1:D2}", left / 60, left % 60);
+        }
+
+        /// <summary>
+        /// 生成延后倒计时窗口下方那行摘要——附加池余额与夜型，其中附加池余额同样按
+        /// "本次已流逝的整分钟"实时投影，倒计时归零时与结算后的账本一致。
+        /// </summary>
+        /// <param name="snoozeStart">本次延后的开始时刻。</param>
+        /// <param name="elapsedSeconds">本次延后已经流逝的秒数。</param>
+        /// <returns>单行摘要文本，例如 <c>附加池剩 42 分钟 ｜ 宽松夜（系数 0.5）</c>。</returns>
+        public static string DescribeLiveSummary(DateTime snoozeStart, int elapsedSeconds)
+        {
+            DateTime nightDate = GetNightDate(snoozeStart);
+            int poolLeft = Math.Max(0, GetPoolRemaining(snoozeStart) - GetLivePoolCost(snoozeStart, elapsedSeconds));
+            string note = GetLivePoolCost(snoozeStart, elapsedSeconds) > 0 ? "（已开始支取）" : string.Empty;
+            string tag = IsRelaxedNight(nightDate) ? "宽松夜" : "紧张夜";
+            return string.Format(CultureInfo.InvariantCulture,
+                "附加池剩 {0} 分钟{1} ｜ {2}（系数 {3:0.#}）",
+                poolLeft, note, tag, GetNightFactor(nightDate));
+        }
+
         // ---------- 心跳与"延后中"标记 ----------
 
         /// <summary>写入一次心跳时间戳，作为"程序在当时还活着"的证据。</summary>

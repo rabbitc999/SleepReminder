@@ -81,6 +81,7 @@ namespace SleepReminder
             {
                 WorkPattern.SingleRest => 1,
                 WorkPattern.BigSmallWeek => 2,
+                WorkPattern.Unemployed => 3,
                 _ => 0
             };
 
@@ -171,6 +172,7 @@ namespace SleepReminder
                 {
                     1 => WorkPattern.SingleRest,
                     2 => WorkPattern.BigSmallWeek,
+                    3 => WorkPattern.Unemployed,
                     _ => WorkPattern.DoubleRest
                 };
                 cur.FixedMinutesPerNight = fixedMinutes;

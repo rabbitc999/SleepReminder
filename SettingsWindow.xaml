@@ -102,6 +102,7 @@
                                 <ComboBoxItem Content="双休（周六、周日都休）"/>
                                 <ComboBoxItem Content="单休（只休周日）"/>
                                 <ComboBoxItem Content="大小周（大周双休 / 小周单休）"/>
+                                <ComboBoxItem Content="待业（每天都是放假）"/>
                             </ComboBox>
 
                             <TextBlock Grid.Row="1" Grid.Column="0" Text="固定额度（分钟 / 夜）"

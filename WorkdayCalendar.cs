@@ -20,6 +20,10 @@ namespace SleepReminder
     ///     （双休 / 单休 / 大小周）。</description></item>
     /// </list>
     ///
+    /// 另有一条压倒性的前提：作息周制若为
+    /// <see cref="WorkPattern.Unemployed"/>（待业），则<b>每天都是放假</b>——
+    /// 此时连调休 / 单位安排上班表都不作数，也就不必再维护节假日数据。
+    ///
     /// 内置数据取自国务院办公厅《关于 2026 年部分节假日安排的通知》
     /// （2025-11-04 发布）。放假安排每年公布一次，因此程序还会在 exe 同目录寻找
     /// <c>holidays.txt</c> 做增量覆盖；当年没有数据时，会在启动时生成模板并提示用户补全。
@@ -170,7 +174,7 @@ namespace SleepReminder
         // ---------- 判定 ----------
 
         /// <summary>
-        /// 判断某一天是否需要上班：调休表 &gt; 放假表 &gt; 周制推演。
+        /// 判断某一天是否需要上班：待业模式 &gt; 调休表 &gt; 放假表 &gt; 周制推演。
         /// </summary>
         /// <param name="date">要判断的日期。</param>
         /// <returns>需要上班返回 true，休息返回 false。</returns>
@@ -178,6 +182,10 @@ namespace SleepReminder
         {
             EnsureInitialized();
             DateTime d = date.Date;
+
+            // 待业模式：不存在"要上班的日子"，连调休 / 单位安排上班也不作数
+            if (QuotaSettings.Current.Pattern == WorkPattern.Unemployed)
+                return false;
 
             if (WorkDays.Contains(d))
                 return true;
@@ -196,6 +204,10 @@ namespace SleepReminder
         {
             switch (QuotaSettings.Current.Pattern)
             {
+                case WorkPattern.Unemployed:
+                    // 待业：每天都是放假
+                    return false;
+
                 case WorkPattern.SingleRest:
                     // 单休：一周只休周日
                     return d.DayOfWeek != DayOfWeek.Sunday;
@@ -226,6 +238,7 @@ namespace SleepReminder
         /// <summary>
         /// 判断某个"夜"是否属于宽松夜——即其次日不用上班。
         /// 周五夜、长假前夜是宽松夜；但调休补班前的周五夜、单休制度下的周五夜不是。
+        /// 待业模式下每天都是放假，因此每一夜都是宽松夜。
         /// </summary>
         /// <param name="nightDate">"夜"对应的自然日。</param>
         /// <returns>次日休息返回 true。</returns>
@@ -258,6 +271,9 @@ namespace SleepReminder
         {
             EnsureInitialized();
             DateTime d = date.Date;
+
+            if (QuotaSettings.Current.Pattern == WorkPattern.Unemployed)
+                return new DayInfo { Date = d, IsWorkday = false, Reason = "待业模式（每天放假）" };
 
             if (WorkDays.Contains(d))
                 return new DayInfo { Date = d, IsWorkday = true, Reason = "调休 / 单位安排上班" };

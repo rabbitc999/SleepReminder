@@ -7,7 +7,7 @@
         Topmost="True"
         ShowInTaskbar="False"
         ResizeMode="NoResize"
-        Width="360" Height="170"
+        Width="380" Height="215"
         WindowStartupLocation="Manual"
         Background="#333333"
         AllowsTransparency="False">
@@ -18,7 +18,15 @@
                    Foreground="White"
                    HorizontalAlignment="Center"
                    FontWeight="Bold"/>
-        <!-- 额度摘要：本夜固定剩余 / 本周附加剩余 / 夜的类型与系数 -->
+        <!-- 固定额度倒计时：本夜固定额度的真实余额，随本次延后一起逐秒递减 -->
+        <TextBlock x:Name="txtFixedQuota"
+                   Text=""
+                   FontSize="22"
+                   Foreground="#ffcc00"
+                   HorizontalAlignment="Center"
+                   FontWeight="Bold"
+                   Margin="16,4,16,0"/>
+        <!-- 附加池余额（同样实时投影）与本夜类型 / 系数 -->
         <TextBlock x:Name="txtQuota"
                    Text=""
                    FontSize="13"
@@ -26,6 +34,6 @@
                    HorizontalAlignment="Center"
                    TextAlignment="Center"
                    TextWrapping="Wrap"
-                   Margin="16,10,16,0"/>
+                   Margin="16,8,16,0"/>
     </StackPanel>
 </Window>

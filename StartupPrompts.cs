@@ -48,6 +48,10 @@ namespace SleepReminder
         /// <returns>本次给出了提示返回 true。</returns>
         public static bool PromptYearlyHolidayIfNeeded(Window? owner, DateTime today)
         {
+            // 待业模式每天都是放假，放假表对判定毫无影响，不必催用户去补
+            if (QuotaSettings.Current.Pattern == WorkPattern.Unemployed)
+                return false;
+
             int year = today.Year;
             if (WorkdayCalendar.HasDataForYear(year))
                 return false;
@@ -106,14 +110,16 @@ namespace SleepReminder
         /// <summary>
         /// 单休 / 大小周单位临近法定假期时，询问用户"实际休哪几天"——
         /// 这类单位通常放不满法定假期。用户取消勾选的日子会被记成上班。
+        /// 双休单位按法定放即可；待业模式每天都是放假，两者都不打扰。
         /// </summary>
         /// <param name="owner">子窗口属主，可为 null。</param>
         /// <param name="today">当前时刻。</param>
         /// <returns>本次弹出了确认窗口返回 true。</returns>
         public static bool PromptHolidayAdjustIfNeeded(Window? owner, DateTime today)
         {
-            // 双休单位一般按法定放即可，无需打扰
-            if (QuotaSettings.Current.Pattern == WorkPattern.DoubleRest)
+            // 只有单休 / 大小周才需要问"单位实际休哪几天"
+            WorkPattern pattern = QuotaSettings.Current.Pattern;
+            if (pattern != WorkPattern.SingleRest && pattern != WorkPattern.BigSmallWeek)
                 return false;
 
             WorkdayCalendar.HolidayBlock? block =
