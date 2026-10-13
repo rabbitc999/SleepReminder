@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Threading;
 
 namespace SleepReminder
@@ -21,11 +22,20 @@ namespace SleepReminder
     ///
     /// 本窗口<b>不写账本</b>：界面上的余额都由调用方以"已流逝秒数"为参数实时算出来，
     /// 真正的入账只在倒计时结束时发生一次。
+    ///
+    /// 窗口<b>可以拖动</b>（没有标题栏，靠自己实现的拖动）：按住窗口任意处拖即可，
+    /// 双击回到默认的屏幕右上角。拖动只改变窗口位置，不影响倒计时与计费。
     /// </summary>
     public partial class SnoozeWindow : Window
     {
         /// <summary>写一次心跳之间的间隔（秒），避免每秒都写注册表。</summary>
         private const int HeartbeatIntervalSeconds = 10;
+
+        /// <summary>按住多久算"拖动"（毫秒）；短于此且位移也很小，判为单击（不做事）。</summary>
+        private const int DragThresholdMs = 150;
+
+        /// <summary>判定"几乎没有移动"的像素阈值，用于区分单击与拖动。</summary>
+        private const double DragThresholdPixels = 4;
 
         /// <summary>本次延后的总秒数，用于反算已流逝的秒数。</summary>
         private readonly int _totalSeconds;
@@ -37,6 +47,19 @@ namespace SleepReminder
         private readonly Action _onComplete;
         private readonly Action? _onHeartbeat;
         private int _ticksSinceHeartbeat;
+
+        // ---------- 拖动状态 ----------
+        /// <summary>本次左键按下时的屏幕坐标。</summary>
+        private Point _dragStartScreen;
+
+        /// <summary>按下时窗口左上角的屏幕坐标；与上式一起构成"零漂移"式拖动基准。</summary>
+        private Point _dragStartWindow;
+
+        /// <summary>按下时刻，用于区分单击与拖动。</summary>
+        private DateTime _dragStartTime;
+
+        /// <summary>本次按下之后是否真的拖动过。</summary>
+        private bool _dragged;
 
         /// <summary>构造延后倒计时窗口。</summary>
         /// <param name="seconds">倒计时总秒数。</param>
@@ -55,10 +78,8 @@ namespace SleepReminder
             _onComplete = onComplete;
             _onHeartbeat = onHeartbeat;
 
-            // 窗口位置：右上角（距屏幕右边缘20像素，上边缘20像素）
-            var screenWidth = SystemParameters.WorkArea.Width;
-            this.Left = screenWidth - this.Width - 20;
-            this.Top = 20;
+            // 初始位置：屏幕右上角（之后用户可以按住窗口拖到任意位置，双击回位）
+            ResetPosition();
 
             this.Closing += SnoozeWindow_Closing;
 
@@ -131,6 +152,70 @@ namespace SleepReminder
             {
                 return string.Empty;
             }
+        }
+
+        // ---------- 拖动窗口 ----------
+        //
+        // 窗口没有标题栏（WindowStyle=None），默认拖不动。这里自己实现：
+        // 以"按下时的屏幕坐标 + 当时窗口位置"为基准，移动时把位移加到基准位置上，
+        // 这样按住哪一处都不会跳。鼠标移出窗口后仍要继续跟手，所以在按下时捕获鼠标
+        // （Mouse.Capture），抬起或离开时释放。
+
+        /// <summary>左键按下：记录拖动基准并捕获鼠标。</summary>
+        private void Root_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            _dragStartScreen = PointToScreen(e.GetPosition(this));
+            _dragStartWindow = new Point(this.Left, this.Top);
+            _dragStartTime = DateTime.Now;
+            _dragged = false;
+
+            Mouse.Capture((IInputElement)sender);
+            e.Handled = true;
+        }
+
+        /// <summary>按住移动：按位移移动窗口，并标记"确实拖动过"。</summary>
+        private void Root_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.LeftButton != MouseButtonState.Pressed)
+                return;
+
+            Point current = PointToScreen(e.GetPosition(this));
+            double dx = current.X - _dragStartScreen.X;
+            double dy = current.Y - _dragStartScreen.Y;
+
+            if (!_dragged &&
+                (Math.Abs(dx) > DragThresholdPixels || Math.Abs(dy) > DragThresholdPixels))
+                _dragged = true;
+
+            if (!_dragged)
+                return;
+
+            this.Left = _dragStartWindow.X + dx;
+            this.Top = _dragStartWindow.Y + dy;
+        }
+
+        /// <summary>左键抬起：释放鼠标捕获。短按且没怎么动 → 视为双击回位判据。</summary>
+        private void Root_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            Mouse.Capture(null);
+
+            bool quickClick = (DateTime.Now - _dragStartTime).TotalMilliseconds < DragThresholdMs;
+            if (!_dragged && quickClick && e.ClickCount >= 2)
+                ResetPosition();
+        }
+
+        /// <summary>鼠标离开窗口：只要没按住就释放捕获，避免吞掉别的窗口的点击。</summary>
+        private void Root_MouseLeave(object sender, MouseEventArgs e)
+        {
+            if (e.LeftButton != MouseButtonState.Pressed)
+                Mouse.Capture(null);
+        }
+
+        /// <summary>把窗口挪回默认位置（屏幕右上角）。</summary>
+        private void ResetPosition()
+        {
+            this.Left = SystemParameters.WorkArea.Width - this.Width - 20;
+            this.Top = 20;
         }
 
         private void SnoozeWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
