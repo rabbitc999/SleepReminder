@@ -447,6 +447,23 @@ namespace SleepReminder.SelfTest
             Eq("结算后本夜延后 25 分钟", SleepLedger.GetTonightSnoozedMinutes(settleNight), 25);
             Eq("结算后池剩与倒计时归零时的投影一致", SleepLedger.GetPoolRemaining(settleNight), 52);
 
+            // 提前收起（倒计时窗口的“返回提醒页”）走的是同一条结算路径：
+            // 按实际经过的分钟入账，剩余时间不送、也不重复扣。
+            // 注意另起一夜（10-17 周六夜），否则 10-16 的固定额度已被上一条用例吃光，投影会一直是 00:00。
+            DateTime cutNight = new DateTime(2026, 10, 17, 23, 30, 0);
+            DateTime cutStart = cutNight.AddMinutes(10);      // 10 分钟后用户点“返回”
+            DateTime cutEnd = cutStart.AddSeconds(86);        // 只跑了 1 分 26 秒
+            SleepLedger.BeginSnooze(cutStart);
+            Eq("提前收起：投影显示固定额度剩 08:34（10 分钟额度扣掉已跑的 86 秒）",
+                SleepLedger.DescribeLiveFixedQuota(cutStart, 86), "固定额度剩 08:34");
+            Eq("提前收起：结算只入账已跑掉的 1 分钟",
+                SleepLedger.SettleSnooze(cutStart, cutEnd), 1);
+            Eq("提前收起：本夜累计 1 分钟（剩余时间没有白送）",
+                SleepLedger.GetTonightSnoozedMinutes(cutEnd), 1);
+            Eq("提前收起：固定额度只被扣掉这 1 分钟，池未被动用",
+                SleepLedger.GetPoolRemaining(cutEnd), SleepLedger.GetPoolRemaining(cutStart));
+            Eq("提前收起：清掉了延后中锚点", SleepLedger.GetActiveSnoozeStart().HasValue, false);
+
             Console.WriteLine();
         }
 

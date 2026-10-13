@@ -218,6 +218,26 @@ namespace SleepReminder
             this.Top = 20;
         }
 
+        /// <summary>
+        /// “返回提醒页”：提前收起倒计时小窗，回到黑色霸屏提醒页。
+        ///
+        /// 语义与倒计时走完是一致的：<b>立刻按实际经过的分钟数入账</b>（由 <c>onComplete</c>
+        /// 里的 <c>SettleSnooze</c> 完成，它会同时清掉“延后中”锚点），
+        /// 因此这次延后已经花掉的额度照扣，只是不再把剩余时间耗完。
+        /// 因为走的正是那条回调，不会出现重复计费。
+        /// </summary>
+        private void Back_Click(object sender, RoutedEventArgs e)
+        {
+            if (_remainingSeconds <= 0)
+                return;
+
+            _remainingSeconds = 0;
+            _timer?.Stop();
+            _timer = null;
+            _onComplete?.Invoke();
+            this.Close();
+        }
+
         private void SnoozeWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             // 阻止用户关闭窗口（Alt+F4、任务栏关闭等）

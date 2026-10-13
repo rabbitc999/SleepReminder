@@ -393,10 +393,50 @@ namespace SleepReminder
                     return;
             }
 
-            // 3) 记账策略：倒计时正常走完 → 结束时按"实际经过"入账；
-            //    被强杀 / 关机 / 注销 → 由下次启动的启动对账补上。
-            //    两条路都会清掉"延后中"标记，因此同一次延后只会结算一次。
-            //    调试 / 测试模式跳过账本写入，避免污染真实的跨重启状态。
+            StartSnooze(planned);
+        }
+
+        /// <summary>
+        /// “稍后继续”：重新弹出倒计时小窗，**重新开始计时**。
+        ///
+        /// 它不额外放贷，也不给折扣：能延后的时长仍由
+        /// <see cref="SleepLedger.GetAvailableMinutes"/> 决定（本夜已延后的部分早已算进去，
+        /// 因为每一次延后都在结束时按实际经过分钟入账），所以重复点它只会一次次消耗本夜额度，
+        /// 并不会凭空多出时间。额度见底时与“延后保存数据”一样给出提示。
+        /// </summary>
+        private void ResumeSnoozeButton_Click(object sender, RoutedEventArgs e)
+        {
+            int planned = Math.Min(RegistryHelper.LoadSnoozeMinutes(),
+                SleepLedger.GetAvailableMinutes(DateTime.Now));
+
+            if (planned <= 0)
+            {
+                CustomMessageBox.ShowOk(
+                    "今晚的延后额度已经用完，不能再延后了。\n\n" +
+                    SleepLedger.DescribeQuota(DateTime.Now) + "\n\n" +
+                    "额度按“夜”结算：固定额度每夜白送、不可累积；\n" +
+                    "附加额度按滚动 7 天回补。关机 / 重启即为一夜的终点。",
+                    "额度已用尽", this);
+                return;
+            }
+
+            StartSnooze(planned);
+        }
+
+        /// <summary>
+        /// 起一笔延后：记“延后中”锚点、隐藏霸屏、弹出倒计时小窗，并在结束时结清。
+        ///
+        /// 记账策略：倒计时正常走完 / 用户点“返回提醒页” → 结束时按"实际经过"入账；
+        /// 被强杀 / 关机 / 注销 → 由下次启动的启动对账补上。
+        /// 两条路都会清掉"延后中"标记，因此同一次延后只会结算一次。
+        /// 调试 / 测试模式跳过账本写入，避免污染真实的跨重启状态。
+        /// </summary>
+        /// <param name="plannedMinutes">本次计划延后的分钟数（调用方已确保在剩余额度以内）。</param>
+        private void StartSnooze(int plannedMinutes)
+        {
+            if (_isSnoozing)
+                return;
+
             bool persist = !App.IsTestMode;
             DateTime snoozeStart = DateTime.Now;
             if (persist)
@@ -408,7 +448,7 @@ namespace SleepReminder
             _isSnoozing = true;
             trayIcon.Text = "⏰ 睡眠提醒器 - 延后中";  // 托盘提示变更
 
-            int seconds = planned * 60;
+            int seconds = plannedMinutes * 60;
             if (App.IsDebugMode) seconds = 10;
 
             // 倒计时窗口里的两行额度文本都按"本次已流逝秒数"实时算：
@@ -428,6 +468,7 @@ namespace SleepReminder
                 {
                     // ---------- 延后结束：静默结清这一笔，直接回霸屏 ----------
                     // 账照记（按实际经过分钟入账 + 清"延后中"锚点），只是不再弹结算窗打扰。
+                    // 用户点“返回提醒页”提前收起时走的也是这里，因此已跑掉的分钟照扣、不会重复计费。
                     _isSnoozing = false;
                     trayIcon.Text = "睡眠提醒器";       // 恢复托盘提示
 

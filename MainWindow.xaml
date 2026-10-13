@@ -114,6 +114,20 @@
                 Click="SnoozeButton_Click"
                 Content="延后保存数据"/>
 
+        <!-- 稍后继续：左上角，在"延后保存数据"下方。重新弹出倒计时小窗（额度照常扣） -->
+        <Button Grid.Row="0" Grid.Column="0"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Margin="30,92,0,0"
+                Width="150" Height="50"
+                FontSize="20" FontWeight="Bold"
+                Foreground="White" Background="#1565C0"
+                BorderBrush="#0D47A1" BorderThickness="2"
+                Cursor="Hand"
+                ToolTip="重新弹出延后倒计时小窗；额度按实际延后时长照常扣除"
+                Click="ResumeSnoozeButton_Click"
+                Content="稍后继续"/>
+
         <!-- 额度摘要：右上角 (Row0, Col2)，进入提醒时刷新 -->
         <TextBlock x:Name="txtQuotaHint"
                    Grid.Row="0" Grid.Column="2"

@@ -7,7 +7,7 @@
         Topmost="True"
         ShowInTaskbar="False"
         ResizeMode="NoResize"
-        Width="380" Height="215"
+        Width="380" Height="258"
         WindowStartupLocation="Manual"
         Background="#333333"
         AllowsTransparency="False">
@@ -46,6 +46,19 @@
                            TextAlignment="Center"
                            TextWrapping="Wrap"
                            Margin="16,8,16,0"/>
+                <!-- 返回：关掉倒计时小窗，回到黑色霸屏提醒页 -->
+                <Button x:Name="btnBack"
+                        Content="返回提醒页"
+                        Width="132" Height="30"
+                        Margin="0,12,0,0"
+                        FontSize="13"
+                        Foreground="White"
+                        Background="#1565C0"
+                        BorderBrush="#0D47A1"
+                        BorderThickness="1"
+                        Cursor="Hand"
+                        ToolTip="关掉这个倒计时小窗，回到黑色霸屏提醒页（本次延后照常计时与计费）"
+                        Click="Back_Click"/>
             </StackPanel>
         </Grid>
     </Border>
