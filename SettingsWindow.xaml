@@ -93,6 +93,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="作息周制"
@@ -110,30 +111,38 @@
                             <TextBox x:Name="txtFixed" Grid.Row="1" Grid.Column="1"
                                      Height="30" FontSize="13" VerticalContentAlignment="Center" Margin="0,0,0,10"/>
 
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="附加池（分钟 / 周）"
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="休息池（分钟 / 周）"
                                        Foreground="White" FontSize="14" VerticalAlignment="Center" Margin="0,0,0,10"/>
-                            <TextBox x:Name="txtPool" Grid.Row="2" Grid.Column="1"
+                            <TextBox x:Name="txtPoolRelax" Grid.Row="2" Grid.Column="1"
                                      Height="30" FontSize="13" VerticalContentAlignment="Center" Margin="0,0,0,10"/>
 
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="宽松夜系数（0.1 ~ 1.0）"
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="工作池（分钟 / 周）"
                                        Foreground="White" FontSize="14" VerticalAlignment="Center" Margin="0,0,0,10"/>
-                            <TextBox x:Name="txtFactor" Grid.Row="3" Grid.Column="1"
+                            <TextBox x:Name="txtPoolWork" Grid.Row="3" Grid.Column="1"
                                      Height="30" FontSize="13" VerticalContentAlignment="Center" Margin="0,0,0,10"/>
 
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="紧张夜单夜封顶（分钟）"
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="宽松夜系数（0.1 ~ 1.0）"
                                        Foreground="White" FontSize="14" VerticalAlignment="Center" Margin="0,0,0,10"/>
-                            <TextBox x:Name="txtCapWork" Grid.Row="4" Grid.Column="1"
+                            <TextBox x:Name="txtFactor" Grid.Row="4" Grid.Column="1"
                                      Height="30" FontSize="13" VerticalContentAlignment="Center" Margin="0,0,0,10"/>
 
-                            <TextBlock Grid.Row="5" Grid.Column="0" Text="宽松夜单夜封顶（分钟）"
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="紧张夜单夜封顶（分钟）"
                                        Foreground="White" FontSize="14" VerticalAlignment="Center" Margin="0,0,0,10"/>
-                            <TextBox x:Name="txtCapRelax" Grid.Row="5" Grid.Column="1"
+                            <TextBox x:Name="txtCapWork" Grid.Row="5" Grid.Column="1"
                                      Height="30" FontSize="13" VerticalContentAlignment="Center" Margin="0,0,0,10"/>
 
-                            <CheckBox x:Name="chkOverdraft" Grid.Row="6" Grid.Column="1"
-                                      Content="附加池耗尽后允许透支（透支额转为债务）"
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="宽松夜单夜封顶（分钟）"
+                                       Foreground="White" FontSize="14" VerticalAlignment="Center" Margin="0,0,0,10"/>
+                            <TextBox x:Name="txtCapRelax" Grid.Row="6" Grid.Column="1"
+                                     Height="30" FontSize="13" VerticalContentAlignment="Center" Margin="0,0,0,10"/>
+
+                            <CheckBox x:Name="chkOverdraft" Grid.Row="7" Grid.Column="1"
+                                      Content="池子耗尽后允许透支（透支额转为债务）"
                                       Foreground="White" FontSize="13" Margin="0,4,0,0"/>
                         </Grid>
+
+                        <TextBlock Text="两个池互不挤占：休息池只供宽松夜（次日不用上班）支取，工作池只供紧张夜支取，各自滚动 7 天。"
+                                   Foreground="#999999" FontSize="12" TextWrapping="Wrap" Margin="0,10,0,0"/>
                     </StackPanel>
                 </Border>
 

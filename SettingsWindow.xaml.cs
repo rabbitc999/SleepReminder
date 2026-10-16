@@ -86,7 +86,8 @@ namespace SleepReminder
             };
 
             txtFixed.Text = s.FixedMinutesPerNight.ToString(CultureInfo.InvariantCulture);
-            txtPool.Text = s.WeeklyPoolMinutes.ToString(CultureInfo.InvariantCulture);
+            txtPoolRelax.Text = s.RelaxedPoolMinutes.ToString(CultureInfo.InvariantCulture);
+            txtPoolWork.Text = s.WorknightPoolMinutes.ToString(CultureInfo.InvariantCulture);
             txtFactor.Text = s.RelaxedNightFactor.ToString("0.##", CultureInfo.InvariantCulture);
             txtCapWork.Text = s.WorknightCapMinutes.ToString(CultureInfo.InvariantCulture);
             txtCapRelax.Text = s.RelaxedNightCapMinutes.ToString(CultureInfo.InvariantCulture);
@@ -106,7 +107,7 @@ namespace SleepReminder
 
             foreach (Control control in new Control[]
                      {
-                         cmbPattern, txtFixed, txtPool, txtFactor,
+                         cmbPattern, txtFixed, txtPoolRelax, txtPoolWork, txtFactor,
                          txtCapWork, txtCapRelax, chkOverdraft
                      })
             {
@@ -134,14 +135,16 @@ namespace SleepReminder
             }
 
             // ---- 额度组：先校验，避免时间已存、额度报错这种半成品状态 ----
-            int fixedMinutes = 0, pool = 0, capWork = 0, capRelax = 0;
+            int fixedMinutes = 0, poolRelax = 0, poolWork = 0, capWork = 0, capRelax = 0;
             double factor = 0;
 
             if (_quotaEditable)
             {
                 if (!TryReadInt(txtFixed, "固定额度", 0, 240, out fixedMinutes))
                     return;
-                if (!TryReadInt(txtPool, "附加池", 0, 1440, out pool))
+                if (!TryReadInt(txtPoolRelax, "休息池", 0, 1440, out poolRelax))
+                    return;
+                if (!TryReadInt(txtPoolWork, "工作池", 0, 1440, out poolWork))
                     return;
                 if (!TryReadInt(txtCapWork, "紧张夜单夜封顶", 0, 720, out capWork))
                     return;
@@ -176,7 +179,8 @@ namespace SleepReminder
                     _ => WorkPattern.DoubleRest
                 };
                 cur.FixedMinutesPerNight = fixedMinutes;
-                cur.WeeklyPoolMinutes = pool;
+                cur.RelaxedPoolMinutes = poolRelax;
+                cur.WorknightPoolMinutes = poolWork;
                 cur.RelaxedNightFactor = factor;
                 cur.WorknightCapMinutes = capWork;
                 cur.RelaxedNightCapMinutes = capRelax;

@@ -37,7 +37,7 @@
                            HorizontalAlignment="Center"
                            FontWeight="Bold"
                            Margin="16,4,16,0"/>
-                <!-- 附加池余额（同样实时投影）与本夜类型 / 系数 -->
+                <!-- 本夜所属池的余额（同样实时投影）与本夜类型 / 系数 -->
                 <TextBlock x:Name="txtQuota"
                            Text=""
                            FontSize="13"

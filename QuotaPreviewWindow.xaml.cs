@@ -12,7 +12,7 @@ namespace SleepReminder
     /// 预览窗口：把"额度账本"和"近期作息"摊开给用户看。
     ///
     /// 左栏是额度——今夜归属、夜的类型与系数、本夜已延后、固定额度余额、
-    /// 附加池在滚动 7 天窗口内的用量与余额、此刻最多还能延后多少、设置锁状态、违约次数，
+    /// 休息池与工作池在各自滚动 7 天窗口内的用量与余额、此刻最多还能延后多少、设置锁状态、违约次数，
     /// 以及近 7 夜的逐夜明细。
     ///
     /// 右栏是作息——从今天起若干天的"上班 / 休息"判定，并标出依据
@@ -53,26 +53,29 @@ namespace SleepReminder
 
             bool relaxed = SleepLedger.IsRelaxedNight(nightDate);
             int cap = SleepLedger.GetNightCap(nightDate);
-            int tonight = SleepLedger.GetTonightSnoozedMinutes(now);
-            int fixedLeft = Math.Max(0, settings.FixedMinutesPerNight - tonight);
-            int poolUsed = SleepLedger.GetPoolUsed(now);
-            int poolLeft = SleepLedger.GetPoolRemaining(now);
-            int available = SleepLedger.GetAvailableMinutes(now);
-            // 本夜真正动了附加池的分钟数（已含夜系数折算）——与"本夜已延后"不一定相等，
+            int tonightSeconds = SleepLedger.GetTonightSnoozedSeconds(now);
+            int fixedLeftSeconds = Math.Max(0, settings.FixedMinutesPerNight * 60 - tonightSeconds);
+            int relaxPoolUsed = SleepLedger.GetPoolUsedSeconds(now, true);
+            int relaxPoolLeft = SleepLedger.GetPoolRemainingSeconds(now, true);
+            int workPoolUsed = SleepLedger.GetPoolUsedSeconds(now, false);
+            int workPoolLeft = SleepLedger.GetPoolRemainingSeconds(now, false);
+            int availableSeconds = SleepLedger.GetAvailableSeconds(now);
+            // 本夜真正动了所属池的秒数（已含夜系数折算）——与"本夜已延后"不一定相等，
             // 固定额度以内的部分根本不扣池子，两者之差就是让用户误解的来源。
-            int tonightPool = SleepLedger.GetRecentNights(now, 1).FirstOrDefault()?.PoolMinutes ?? 0;
+            int tonightPoolSeconds = SleepLedger.GetRecentNights(now, 1).FirstOrDefault()?.PoolSeconds ?? 0;
 
             var sb = new StringBuilder();
             sb.AppendLine($"今夜归属：{nightDate:yyyy-MM-dd}（{WeekdayName(nightDate.DayOfWeek)}）");
             sb.AppendLine($"夜的类型：{(relaxed ? "宽松夜" : "紧张夜")}（系数 {SleepLedger.GetNightFactor(nightDate):0.#}）");
-            sb.AppendLine($"本夜已延后：{tonight} 分钟 ／ 单夜封顶 {cap} 分钟");
-            sb.AppendLine($"　└ 其中动用附加池：{tonightPool} 分钟（固定额度以内的部分不扣池）");
+            sb.AppendLine($"本夜已延后：{SleepLedger.FormatClock(tonightSeconds)} ／ 单夜封顶 {cap} 分钟");
+            sb.AppendLine($"　└ 其中动用{SleepLedger.GetPoolName(nightDate)}：{SleepLedger.FormatClock(tonightPoolSeconds)}（固定额度以内的部分不扣池）");
             sb.AppendLine();
-            sb.AppendLine($"固定额度：{settings.FixedMinutesPerNight} 分钟 / 夜，本夜剩余 {fixedLeft} 分钟");
-            sb.AppendLine($"附加池：{settings.WeeklyPoolMinutes} 分钟 / 周（滚动 7 天）");
-            sb.AppendLine($"　　本周已从池中支取 {poolUsed} 分钟，剩余 {poolLeft} 分钟");
+            sb.AppendLine($"固定额度：{settings.FixedMinutesPerNight} 分钟 / 夜，本夜剩余 {SleepLedger.FormatClock(fixedLeftSeconds)}");
+            sb.AppendLine($"休息池：{settings.RelaxedPoolMinutes} 分钟 / 周，已支取 {SleepLedger.FormatClock(relaxPoolUsed)}，剩余 {SleepLedger.FormatClock(relaxPoolLeft)}");
+            sb.AppendLine($"工作池：{settings.WorknightPoolMinutes} 分钟 / 周，已支取 {SleepLedger.FormatClock(workPoolUsed)}，剩余 {SleepLedger.FormatClock(workPoolLeft)}");
+            sb.AppendLine($"　　（两池互不挤占，各自滚动 7 天；本夜是{(relaxed ? "宽松夜" : "紧张夜")}，只动{SleepLedger.GetPoolName(nightDate)}）");
             sb.AppendLine();
-            sb.AppendLine($"此刻最多还能延后：{available} 分钟");
+            sb.AppendLine($"此刻最多还能延后：{SleepLedger.FormatClock(availableSeconds)}");
             sb.AppendLine($"额度设置：{QuotaSettings.DescribeLock(now)}");
             sb.AppendLine($"累计违约：{SleepLedger.GetViolationCount()} 次");
 
@@ -89,12 +92,12 @@ namespace SleepReminder
         /// <param name="now">当前时刻。</param>
         private void BuildNightRows(DateTime now)
         {
-            double[] widths = { 78, 46, 50, 52, 56 };
+            double[] widths = { 78, 46, 50, 62, 62 };
 
             spNights.Children.Clear();
             spNights.Children.Add(Hint(
-                "「延后」= 本夜累计延后分钟数；「池扣」= 其中真正动用附加池的分钟数" +
-                "（固定额度以内的部分不扣池子）。"));
+                "「延后」= 本夜累计延后时长；「池扣」= 其中真正动用本夜所属池的时长" +
+                "（固定额度以内的部分不扣池子）。时长一律按秒记账，显示为 mm:ss。"));
             spNights.Children.Add(BuildRow(new[]
             {
                 ("日期", HeaderBrush), ("星期", HeaderBrush), ("夜型", HeaderBrush),
@@ -120,8 +123,8 @@ namespace SleepReminder
                     (n.NightDate.ToString("MM-dd", CultureInfo.InvariantCulture), dateBrush),
                     (WeekdayName(n.NightDate.DayOfWeek), dateBrush),
                     (n.IsRelaxed ? "宽松" : "紧张", typeBrush),
-                    (n.TotalMinutes.ToString(CultureInfo.InvariantCulture), MutedBrush),
-                    (n.PoolMinutes.ToString(CultureInfo.InvariantCulture), MutedBrush)
+                    (SleepLedger.FormatClock(n.TotalSeconds), MutedBrush),
+                    (SleepLedger.FormatClock(n.PoolSeconds), MutedBrush)
                 }, widths));
             }
         }

@@ -28,7 +28,7 @@ namespace SleepReminder
 
     /// <summary>
     /// 额度与周制设置。集合了"周制（双休 / 单休 / 大小周）"与"额度参数
-    /// （固定额度、附加池、夜系数、单夜封顶、是否透支）"两类可调项。
+    /// （固定额度、休息池 / 工作池、夜系数、单夜封顶、是否透支）"两类可调项。
     ///
     /// 这些参数直接决定惩罚力度，因此受"<b>每个自然周只能修改一次</b>"的锁保护，
     /// 防止出现"当晚额度不够，就临时把额度调大"这种绕开机制的操作。
@@ -48,8 +48,11 @@ namespace SleepReminder
         /// <summary>固定额度：每夜白送的分钟数（默认值）。</summary>
         public const int DefaultFixedMinutesPerNight = 10;
 
-        /// <summary>附加池默认容量（分钟 / 滚动 7 天）。</summary>
-        public const int DefaultWeeklyPoolMinutes = 60;
+        /// <summary>休息池默认容量（分钟 / 滚动 7 天）。</summary>
+        public const int DefaultRelaxedPoolMinutes = 60;
+
+        /// <summary>工作池默认容量（分钟 / 滚动 7 天）。</summary>
+        public const int DefaultWorknightPoolMinutes = 60;
 
         /// <summary>宽松夜默认系数。</summary>
         public const double DefaultRelaxedNightFactor = 0.5;
@@ -73,8 +76,17 @@ namespace SleepReminder
         /// <summary>固定额度：每夜白送的分钟数。</summary>
         public int FixedMinutesPerNight { get; set; } = DefaultFixedMinutesPerNight;
 
-        /// <summary>附加池容量（分钟 / 滚动 7 天）。</summary>
-        public int WeeklyPoolMinutes { get; set; } = DefaultWeeklyPoolMinutes;
+        /// <summary>
+        /// 休息池容量（分钟 / 滚动 7 天）：只供<b>宽松夜</b>（次日不用上班）支取。
+        /// 与工作池完全互不挤占——周末的挥霍不会吃掉工作日的额度。
+        /// </summary>
+        public int RelaxedPoolMinutes { get; set; } = DefaultRelaxedPoolMinutes;
+
+        /// <summary>
+        /// 工作池容量（分钟 / 滚动 7 天）：只供<b>紧张夜</b>（次日要上班）支取。
+        /// 与休息池完全互不挤占。
+        /// </summary>
+        public int WorknightPoolMinutes { get; set; } = DefaultWorknightPoolMinutes;
 
         /// <summary>宽松夜的附加消耗系数（越小越宽松）。</summary>
         public double RelaxedNightFactor { get; set; } = DefaultRelaxedNightFactor;
@@ -85,7 +97,7 @@ namespace SleepReminder
         /// <summary>宽松夜单夜延后封顶（分钟）。</summary>
         public int RelaxedNightCapMinutes { get; set; } = DefaultRelaxedNightCapMinutes;
 
-        /// <summary>附加池耗尽后是否允许透支。</summary>
+        /// <summary>本夜所属池耗尽后是否允许透支。</summary>
         public bool AllowOverdraft { get; set; }
 
         /// <summary>
@@ -237,10 +249,11 @@ namespace SleepReminder
             return string.Join("\n", new[]
             {
                 $"周制：{pattern}",
-                $"固定额度：{FixedMinutesPerNight} 分钟 / 夜 ｜ 附加池：{WeeklyPoolMinutes} 分钟 / 周",
+                $"固定额度：{FixedMinutesPerNight} 分钟 / 夜",
+                $"附加池：休息池 {RelaxedPoolMinutes} 分钟 / 周 ｜ 工作池 {WorknightPoolMinutes} 分钟 / 周（各算各的滚动 7 天）",
                 $"宽松夜系数：{RelaxedNightFactor:0.##}（紧张夜恒为 1）",
                 $"单夜封顶：紧张夜 {WorknightCapMinutes} 分钟 ｜ 宽松夜 {RelaxedNightCapMinutes} 分钟",
-                $"附加池耗尽：{(AllowOverdraft ? "允许透支（转债务）" : "不再放行，只剩固定额度")}"
+                $"池子耗尽：{(AllowOverdraft ? "允许透支（转债务）" : "不再放行，只剩固定额度")}"
             });
         }
 
@@ -281,7 +294,8 @@ namespace SleepReminder
                 BigWeekAnchorMonday = GetMonday(BigWeekAnchorMonday.Value);
 
             FixedMinutesPerNight = Math.Clamp(FixedMinutesPerNight, 0, 240);
-            WeeklyPoolMinutes = Math.Clamp(WeeklyPoolMinutes, 0, 1440);
+            RelaxedPoolMinutes = Math.Clamp(RelaxedPoolMinutes, 0, 1440);
+            WorknightPoolMinutes = Math.Clamp(WorknightPoolMinutes, 0, 1440);
             RelaxedNightFactor = Math.Clamp(RelaxedNightFactor, 0.1, 1.0);
             WorknightCapMinutes = Math.Clamp(WorknightCapMinutes, 0, 720);
             RelaxedNightCapMinutes = Math.Clamp(RelaxedNightCapMinutes, 0, 720);
@@ -317,7 +331,11 @@ namespace SleepReminder
                     s.BigWeekAnchorMonday = anchor;
 
                 s.FixedMinutesPerNight = ReadInt(map, "Fixed", s.FixedMinutesPerNight);
-                s.WeeklyPoolMinutes = ReadInt(map, "Pool", s.WeeklyPoolMinutes);
+                // 旧版只有一个池（Pool）：两池容量都从它取，保证升级后额度不缩水。
+                // 新版分别写 PoolRelax / PoolWork，读出时优先用新键。
+                int legacyPool = ReadInt(map, "Pool", -1);
+                s.RelaxedPoolMinutes = ReadInt(map, "PoolRelax", legacyPool >= 0 ? legacyPool : s.RelaxedPoolMinutes);
+                s.WorknightPoolMinutes = ReadInt(map, "PoolWork", legacyPool >= 0 ? legacyPool : s.WorknightPoolMinutes);
                 s.RelaxedNightFactor = ReadDouble(map, "Factor", s.RelaxedNightFactor);
                 s.WorknightCapMinutes = ReadInt(map, "CapWork", s.WorknightCapMinutes);
                 s.RelaxedNightCapMinutes = ReadInt(map, "CapRelax", s.RelaxedNightCapMinutes);
@@ -338,7 +356,8 @@ namespace SleepReminder
                     ? BigWeekAnchorMonday.Value.ToString(DateFormat, CultureInfo.InvariantCulture)
                     : string.Empty),
                 "Fixed=" + FixedMinutesPerNight.ToString(CultureInfo.InvariantCulture),
-                "Pool=" + WeeklyPoolMinutes.ToString(CultureInfo.InvariantCulture),
+                "PoolRelax=" + RelaxedPoolMinutes.ToString(CultureInfo.InvariantCulture),
+                "PoolWork=" + WorknightPoolMinutes.ToString(CultureInfo.InvariantCulture),
                 "Factor=" + RelaxedNightFactor.ToString("0.###", CultureInfo.InvariantCulture),
                 "CapWork=" + WorknightCapMinutes.ToString(CultureInfo.InvariantCulture),
                 "CapRelax=" + RelaxedNightCapMinutes.ToString(CultureInfo.InvariantCulture),

@@ -8,9 +8,10 @@ namespace SleepReminder.SelfTest
     /// <summary>
     /// SleepReminder 逻辑层的离屏回归自测。
     ///
-    /// 覆盖六块纯逻辑：工作日日历（节假日 / 调休 / 周制 / 待业）、额度设置（周键与每周一次的修改锁）、
+    /// 覆盖逻辑层各块：工作日日历（节假日 / 调休 / 周制 / 待业）、额度设置（周键与每周一次的修改锁）、
     /// 额度账本（夜归属 / 固定+附加计价 / 封顶 / 滚动 7 天 / 启动对账）、提醒外观（背景图与文字）、
-    /// 预览数据，以及延后倒计时的实时额度投影。
+    /// 预览数据、延后倒计时的实时额度投影，以及旧分钟账本到秒级账本的迁移。
+    /// <b>账本一律以秒为单位</b>，断言里写的就是秒，不再有分钟截断。
     ///
     /// 自测会读写 <c>HKCU\Software\SleepReminder</c>，因此运行前请先备份该键，
     /// 运行结束后由外部脚本还原。进程退出码：0 = 全部通过，1 = 存在失败。
@@ -45,6 +46,7 @@ namespace SleepReminder.SelfTest
             SectionF_PreviewData();
             SectionG_UnemployedMode();
             SectionH_LiveSnoozeQuota();
+            SectionI_LegacyLedgerMigration();
 
             ResetStore();
 
@@ -145,7 +147,8 @@ namespace SleepReminder.SelfTest
 
             DateTime monday = D("2026-10-12");
             Eq("默认参数：固定额度 10", QuotaSettings.Current.FixedMinutesPerNight, 10);
-            Eq("默认参数：附加池 60", QuotaSettings.Current.WeeklyPoolMinutes, 60);
+            Eq("默认参数：休息池 60", QuotaSettings.Current.RelaxedPoolMinutes, 60);
+            Eq("默认参数：工作池 60", QuotaSettings.Current.WorknightPoolMinutes, 60);
             Eq("首次可改设置", QuotaSettings.CanModify(monday), true);
 
             QuotaSettings.Current.FixedMinutesPerNight = 12;
@@ -178,40 +181,42 @@ namespace SleepReminder.SelfTest
             Eq("宽松夜封顶 60", SleepLedger.GetNightCap(D("2026-10-10")), 60);
             Eq("紧张夜封顶 30", SleepLedger.GetNightCap(D("2026-10-09")), 30);
 
-            // 宽松夜计价：10 分钟全走固定
+            // 宽松夜计价：10 分钟（600 秒）全走固定额度
             DateTime relaxed = new DateTime(2026, 10, 10, 23, 30, 0);
-            Eq("初始可用额度 60", SleepLedger.GetAvailableMinutes(relaxed), 60);
-            Eq("延后 10 分钟全部入账", SleepLedger.RecordSnooze(relaxed, 10), 10);
-            Eq("今晚累计 10", SleepLedger.GetTonightSnoozedMinutes(relaxed), 10);
-            Eq("池子未消耗", SleepLedger.GetPoolUsed(relaxed), 0);
+            Eq("初始可用额度 3600 秒", SleepLedger.GetAvailableSeconds(relaxed), 3600);
+            Eq("延后 600 秒全部入账", SleepLedger.RecordSnoozeSeconds(relaxed, 600), 600);
+            Eq("今晚累计 600 秒", SleepLedger.GetTonightSnoozedSeconds(relaxed), 600);
+            Eq("休息池未消耗", SleepLedger.GetPoolUsedSeconds(relaxed, true), 0);
 
-            // 再延后 20：固定已用完，20 × 0.5 = 扣 10
-            Eq("再延后 20 分钟入账", SleepLedger.RecordSnooze(relaxed, 20), 20);
-            Eq("今晚累计 30", SleepLedger.GetTonightSnoozedMinutes(relaxed), 30);
-            Eq("池子扣 10（系数 0.5）", SleepLedger.GetPoolUsed(relaxed), 10);
-            Eq("池子剩余 50", SleepLedger.GetPoolRemaining(relaxed), 50);
-            Eq("剩余可用 30", SleepLedger.GetAvailableMinutes(relaxed), 30);
+            // 再延后 1200 秒：固定额度已用完，1200 × 0.5 = 扣 600
+            Eq("再延后 1200 秒入账", SleepLedger.RecordSnoozeSeconds(relaxed, 1200), 1200);
+            Eq("今晚累计 1800 秒", SleepLedger.GetTonightSnoozedSeconds(relaxed), 1800);
+            Eq("休息池扣 600（系数 0.5）", SleepLedger.GetPoolUsedSeconds(relaxed, true), 600);
+            Eq("休息池剩余 3000", SleepLedger.GetPoolRemainingSeconds(relaxed, true), 3000);
+            Eq("剩余可用 1800 秒", SleepLedger.GetAvailableSeconds(relaxed), 1800);
 
-            // 单夜封顶
-            Eq("请求 100 分钟被截到 30", SleepLedger.RecordSnooze(relaxed, 100), 30);
-            Eq("今晚累计到达封顶 60", SleepLedger.GetTonightSnoozedMinutes(relaxed), 60);
-            Eq("池子累计扣 25", SleepLedger.GetPoolUsed(relaxed), 25);
-            Eq("封顶后可用为 0", SleepLedger.GetAvailableMinutes(relaxed), 0);
-            Eq("封顶后不再入账", SleepLedger.RecordSnooze(relaxed, 10), 0);
+            // 单夜封顶（宽松夜 60 分钟 = 3600 秒）
+            Eq("请求 6000 秒被截到 1800", SleepLedger.RecordSnoozeSeconds(relaxed, 6000), 1800);
+            Eq("今晚累计到达封顶 3600", SleepLedger.GetTonightSnoozedSeconds(relaxed), 3600);
+            Eq("休息池累计扣 1500", SleepLedger.GetPoolUsedSeconds(relaxed, true), 1500);
+            Eq("封顶后可用为 0", SleepLedger.GetAvailableSeconds(relaxed), 0);
+            Eq("封顶后不再入账", SleepLedger.RecordSnoozeSeconds(relaxed, 600), 0);
 
-            // 紧张夜计价：系数 1.0
+            // 紧张夜计价：系数 1.0，而且走的是另一个池（工作池）——与上面的休息池各算各的
             DateTime tense = new DateTime(2026, 10, 12, 23, 30, 0);
-            Eq("紧张夜延后 20 分钟入账", SleepLedger.RecordSnooze(tense, 20), 20);
-            Eq("紧张夜池子扣 10（系数 1.0）", SleepLedger.GetPoolUsed(tense), 35);
-            Eq("滚动窗口剩余 25", SleepLedger.GetPoolRemaining(tense), 25);
+            Eq("紧张夜延后 1200 秒入账", SleepLedger.RecordSnoozeSeconds(tense, 1200), 1200);
+            Eq("工作池扣 600（系数 1.0，不含 10-10 那笔）", SleepLedger.GetPoolUsedSeconds(tense, false), 600);
+            Eq("工作池剩余 3000（容量 3600 未被休息池挤占）", SleepLedger.GetPoolRemainingSeconds(tense, false), 3000);
+            Eq("休息池不受紧张夜影响，仍是 1500", SleepLedger.GetPoolUsedSeconds(tense, true), 1500);
 
             // 滚动 7 天：8 天后的窗口不再包含 10-10
             DateTime later = new DateTime(2026, 10, 18, 23, 30, 0);
-            Eq("滚动窗口 7 天后甩掉 10-10", SleepLedger.GetPoolUsed(later), 10);
+            Eq("滚动窗口 7 天后休息池清空", SleepLedger.GetPoolUsedSeconds(later, true), 0);
+            Eq("滚动窗口 7 天后工作池仍是 10-12 的 600", SleepLedger.GetPoolUsedSeconds(later, false), 600);
 
             string summary = SleepLedger.DescribeQuota(tense);
-            Check("额度摘要含固定与附加字段",
-                summary.Contains("固定额度剩") && summary.Contains("附加池剩"), summary);
+            Check("额度摘要含固定与工作池字段",
+                summary.Contains("固定额度剩") && summary.Contains("工作池剩"), summary);
 
             Console.WriteLine();
         }
@@ -224,17 +229,18 @@ namespace SleepReminder.SelfTest
             ResetStore();
             Console.WriteLine("[D] 启动对账：延后中断补记 / 时钟回拨");
 
-            // 模拟：23:30 开始延后，23:45 写完最后一次心跳后进程被强杀
+            // 模拟：23:30 开始延后，23:45:30 写完最后一次心跳后进程被强杀
             DateTime start = DateTime.Now.Date.AddHours(23).AddMinutes(30);
             SleepLedger.BeginSnooze(start);
             Eq("已标记延后中", SleepLedger.GetActiveSnoozeStart().HasValue, true);
 
-            SleepLedger.WriteHeartbeat(start.AddMinutes(15));
+            SleepLedger.WriteHeartbeat(start.AddMinutes(15).AddSeconds(30));
             string? note = SleepLedger.ReconcileOnStartup(start.AddMinutes(16));
 
             Check("对账给出补记提示", note != null && note.Contains("补记"), note ?? "(null)");
-            Eq("补记后今晚已入账 15 分钟",
-                SleepLedger.GetTonightSnoozedMinutes(start.AddMinutes(16)), 15);
+            Eq("补记按秒入账 930 秒（15 分 30 秒，不再向下取整到 15 分钟）",
+                SleepLedger.GetTonightSnoozedSeconds(start.AddMinutes(16)), 930);
+            Check("补记文案写成 15 分 30 秒", note != null && note.Contains("15 分 30 秒"), note ?? "(null)");
             Eq("对账后清除了延后中标记", SleepLedger.GetActiveSnoozeStart().HasValue, false);
 
             // 时钟回拨：心跳在未来 → 判定回拨并记违约
@@ -331,18 +337,18 @@ namespace SleepReminder.SelfTest
             Eq("空请求返回空列表", WorkdayCalendar.GetUpcomingDays(D("2026-10-12"), 0).Count, 0);
 
             // 近 7 夜摘要：日期升序，且带上“是否宽松夜”
-            SleepLedger.RecordSnooze(new DateTime(2026, 10, 10, 23, 30, 0), 10);
-            SleepLedger.RecordSnooze(new DateTime(2026, 10, 12, 23, 30, 0), 12);
+            SleepLedger.RecordSnoozeSeconds(new DateTime(2026, 10, 10, 23, 30, 0), 610);
+            SleepLedger.RecordSnoozeSeconds(new DateTime(2026, 10, 12, 23, 30, 0), 735);
 
             List<SleepLedger.NightSummary> nights =
                 SleepLedger.GetRecentNights(new DateTime(2026, 10, 12, 23, 40, 0), 7);
             Eq("近 7 夜返回 2 笔", nights.Count, 2);
             Eq("第一笔是 10-10", nights[0].NightDate, D("2026-10-10"));
             Eq("10-10 判为宽松夜", nights[0].IsRelaxed, true);
-            Eq("10-10 延后 10 分钟", nights[0].TotalMinutes, 10);
+            Eq("10-10 延后 610 秒（10 分 10 秒）", nights[0].TotalSeconds, 610);
             Eq("第二笔是 10-12", nights[1].NightDate, D("2026-10-12"));
             Eq("10-12 判为紧张夜", nights[1].IsRelaxed, false);
-            Eq("10-12 延后 12 分钟", nights[1].TotalMinutes, 12);
+            Eq("10-12 延后 735 秒（12 分 15 秒）", nights[1].TotalSeconds, 735);
             Eq("窗口外不返回", SleepLedger.GetRecentNights(new DateTime(2026, 10, 30, 23, 30, 0), 7).Count, 0);
 
             Console.WriteLine();
@@ -396,7 +402,7 @@ namespace SleepReminder.SelfTest
         // ---------- H. 延后倒计时的实时额度 ----------
 
         /// <summary>
-        /// 验证倒计时窗口用到的实时投影：固定额度随已流逝秒数递减、附加池按已流逝整分钟支取，
+        /// 验证倒计时窗口用到的实时投影：固定额度随已流逝秒数递减、本夜所属池按已流逝秒数支取，
         /// 且这份投影<b>只读不写</b>；倒计时归零时的投影值应与随后结算出的账本一致。
         /// </summary>
         private static void SectionH_LiveSnoozeQuota()
@@ -404,12 +410,12 @@ namespace SleepReminder.SelfTest
             ResetStore();
             Console.WriteLine("[H] 延后倒计时：固定额度实时递减（纯投影，不写账）");
 
-            // 10-10 是周六、次日休息 → 宽松夜（系数 0.5、封顶 60）
+            // 10-10 是周六、次日休息 → 宽松夜（系数 0.5、封顶 60 分钟）
             DateTime relaxed = new DateTime(2026, 10, 10, 23, 30, 0);
             Eq("起始：固定额度剩 10:00",
                 SleepLedger.DescribeLiveFixedQuota(relaxed, 0), "固定额度剩 10:00");
-            Eq("起始：附加池 60、标为宽松夜",
-                SleepLedger.DescribeLiveSummary(relaxed, 0), "附加池剩 60 分钟 ｜ 宽松夜（系数 0.5）");
+            Eq("起始：休息池满 3600 秒（显示进位为 1:00:00）、标为宽松夜",
+                SleepLedger.DescribeLiveSummary(relaxed, 0), "休息池剩 1:00:00 ｜ 宽松夜（系数 0.5）");
 
             Eq("流逝 1 分 30 秒：固定额度剩 08:30",
                 SleepLedger.DescribeLiveFixedQuota(relaxed, 90), "固定额度剩 08:30");
@@ -417,38 +423,39 @@ namespace SleepReminder.SelfTest
                 SleepLedger.DescribeLiveFixedQuota(relaxed, 120), "固定额度剩 08:00");
             Eq("流逝 10 分钟：固定额度归零",
                 SleepLedger.DescribeLiveFixedQuota(relaxed, 600), "固定额度剩 00:00");
-            Eq("流逝 11 分钟：超出 1 分钟 × 0.5 向上取整 → 池剩 59",
-                SleepLedger.DescribeLiveSummary(relaxed, 660), "附加池剩 59 分钟（已开始支取） ｜ 宽松夜（系数 0.5）");
+            Eq("流逝 11 分钟：超出 60 秒 × 0.5 = 30 秒 → 休息池剩 59:30",
+                SleepLedger.DescribeLiveSummary(relaxed, 660), "休息池剩 59:30（已开始支取） ｜ 宽松夜（系数 0.5）");
 
-            Eq("实时投影不写本夜账", SleepLedger.GetTonightSnoozedMinutes(relaxed), 0);
+            Eq("实时投影不写本夜账", SleepLedger.GetTonightSnoozedSeconds(relaxed), 0);
             Eq("实时投影不写心跳", SleepLedger.GetLastHeartbeat().HasValue, false);
 
             // 紧张夜：超出部分不打折（系数 1）
             DateTime tense = new DateTime(2026, 10, 12, 23, 30, 0);
             string tenseLine = SleepLedger.DescribeLiveSummary(tense, 660);
-            Check("紧张夜：超出 1 分钟全额扣池（池剩 59）", tenseLine.Contains("附加池剩 59"), tenseLine);
+            Check("紧张夜：超出 60 秒全额扣工作池（剩 59:00）", tenseLine.Contains("工作池剩 59"), tenseLine);
             Check("紧张夜：标注为紧张夜", tenseLine.Contains("紧张夜"), tenseLine);
 
             // 本夜已被前一次延后吃掉一部分固定额度时，本次倒计时从那部分之后起算
-            SleepLedger.RecordSnooze(tense, 4);
+            SleepLedger.RecordSnoozeSeconds(tense, 240);
             Eq("本夜已用 4 分钟：实时剩余从 06:00 起算",
                 SleepLedger.DescribeLiveFixedQuota(tense, 0), "固定额度剩 06:00");
             Eq("本夜已用 4 分钟：再流逝 60 秒 → 05:00",
                 SleepLedger.DescribeLiveFixedQuota(tense, 60), "固定额度剩 05:00");
-            Eq("本夜已用 4 分钟：池仍未被动用", SleepLedger.GetPoolUsed(tense), 0);
+            Eq("本夜已用 4 分钟：工作池仍未被动用", SleepLedger.GetPoolUsedSeconds(tense, false), 0);
 
             // 归零时的投影 = 结算后的账本（10-16 周五夜、次日周六休息 → 宽松夜）
             DateTime settleNight = new DateTime(2026, 10, 16, 23, 30, 0);
             string projected = SleepLedger.DescribeLiveSummary(settleNight, 25 * 60);
-            Check("归零时的投影：池剩 52（超出 15 × 0.5 → 8）",
-                projected.Contains("附加池剩 52"), projected);
+            Check("归零时的投影：休息池剩 52:30（超出 900 秒 × 0.5 = 450 秒）",
+                projected.Contains("休息池剩 52:30"), projected);
 
-            SleepLedger.RecordSnooze(settleNight, 25);
-            Eq("结算后本夜延后 25 分钟", SleepLedger.GetTonightSnoozedMinutes(settleNight), 25);
-            Eq("结算后池剩与倒计时归零时的投影一致", SleepLedger.GetPoolRemaining(settleNight), 52);
+            SleepLedger.RecordSnoozeSeconds(settleNight, 1500);
+            Eq("结算后本夜延后 1500 秒", SleepLedger.GetTonightSnoozedSeconds(settleNight), 1500);
+            Eq("结算后休息池剩余与倒计时归零时的投影一致", SleepLedger.GetPoolRemainingSeconds(settleNight, true), 3150);
 
             // 提前收起（倒计时窗口的“返回提醒页”）走的是同一条结算路径：
-            // 按实际经过的分钟入账，剩余时间不送、也不重复扣。
+            // 按实际经过的秒数入账，剩余时间不送、也不重复扣。
+            // 这一条正是过去会被向下取整吃掉 26 秒的逃逸场景：86 秒必须实记 86 秒。
             // 注意另起一夜（10-17 周六夜），否则 10-16 的固定额度已被上一条用例吃光，投影会一直是 00:00。
             DateTime cutNight = new DateTime(2026, 10, 17, 23, 30, 0);
             DateTime cutStart = cutNight.AddMinutes(10);      // 10 分钟后用户点“返回”
@@ -456,13 +463,58 @@ namespace SleepReminder.SelfTest
             SleepLedger.BeginSnooze(cutStart);
             Eq("提前收起：投影显示固定额度剩 08:34（10 分钟额度扣掉已跑的 86 秒）",
                 SleepLedger.DescribeLiveFixedQuota(cutStart, 86), "固定额度剩 08:34");
-            Eq("提前收起：结算只入账已跑掉的 1 分钟",
-                SleepLedger.SettleSnooze(cutStart, cutEnd), 1);
-            Eq("提前收起：本夜累计 1 分钟（剩余时间没有白送）",
-                SleepLedger.GetTonightSnoozedMinutes(cutEnd), 1);
-            Eq("提前收起：固定额度只被扣掉这 1 分钟，池未被动用",
-                SleepLedger.GetPoolRemaining(cutEnd), SleepLedger.GetPoolRemaining(cutStart));
+            Eq("提前收起：结算实记 86 秒（不再向下取整成 1 分钟）",
+                SleepLedger.SettleSnooze(cutStart, cutEnd), 86);
+            Eq("提前收起：本夜累计 86 秒（剩余时间没有白送）",
+                SleepLedger.GetTonightSnoozedSeconds(cutEnd), 86);
+            Eq("提前收起：固定额度只被扣掉这 86 秒，休息池未被动用",
+                SleepLedger.GetPoolRemainingSeconds(cutEnd, true), SleepLedger.GetPoolRemainingSeconds(cutStart, true));
             Eq("提前收起：清掉了延后中锚点", SleepLedger.GetActiveSnoozeStart().HasValue, false);
+
+            Console.WriteLine();
+        }
+
+        // ---------- I. 旧分钟账本迁移 ----------
+
+        /// <summary>
+        /// 验证"分钟级旧账本 → 秒级新账本"的一次性迁移：
+        /// 旧值按 ×60 换算、一笔不丢，迁移后旧值被删除，重复读取不会二次放大。
+        /// 用例日期取"今天"，避免踩到账本 14 天裁剪线。
+        /// </summary>
+        private static void SectionI_LegacyLedgerMigration()
+        {
+            ResetStore();
+            Console.WriteLine("[I] 旧分钟账本迁移：×60 换算 / 只做一次");
+
+            DateTime night = DateTime.Today.AddHours(23).AddMinutes(30);
+            string dateKey = night.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+            // 手写一份旧格式（分钟）的账本，模拟升级前的存量数据
+            using (RegistryKey key = Registry.CurrentUser.CreateSubKey(RegKeyPath))
+            {
+                key?.SetValue("LedgerNightLog", $"{dateKey}:10:5");
+            }
+
+            Eq("迁移后本夜 10 分钟 → 600 秒", SleepLedger.GetTonightSnoozedSeconds(night), 600);
+
+            // 该夜归入哪个池取决于它的夜型，这里不预设今天是周几，
+            // 只验证"迁移出来的 300 秒确实落进该夜所属的那个池，另一个池不受影响"。
+            bool relaxed = SleepLedger.IsRelaxedNight(night);
+            Eq("迁移后池消耗 5 分钟 → 300 秒（归入该夜所属的池）",
+                SleepLedger.GetPoolUsedSeconds(night, relaxed), 300);
+            Eq("另一个池不受影响", SleepLedger.GetPoolUsedSeconds(night, !relaxed), 0);
+
+            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RegKeyPath))
+            {
+                Check("旧键已被删除", key?.GetValue("LedgerNightLog") == null,
+                    key?.GetValue("LedgerNightLog")?.ToString() ?? "(null)");
+                string? migrated = key?.GetValue("LedgerNightLogSec") as string;
+                Check("新键已写入秒级账本", migrated != null && migrated.Contains($"{dateKey}:600:300"),
+                    migrated ?? "(null)");
+            }
+
+            // 再读一次：迁移是幂等的，不会 ×60 两次
+            Eq("重复读取不会二次放大", SleepLedger.GetTonightSnoozedSeconds(night), 600);
 
             Console.WriteLine();
         }

@@ -363,8 +363,8 @@ namespace SleepReminder
         {
             DateTime now = DateTime.Now;
 
-            // 1) 先看额度：这一夜还能延后多少分钟
-            int available = SleepLedger.GetAvailableMinutes(now);
+            // 1) 先看额度：这一夜还能延后多少秒
+            int available = SleepLedger.GetAvailableSeconds(now);
             if (available <= 0)
             {
                 CustomMessageBox.ShowOk(
@@ -376,38 +376,39 @@ namespace SleepReminder
                 return;
             }
 
-            // 2) 取本次想延后的分钟数，并夹在剩余额度之内
-            int wanted = RegistryHelper.LoadSnoozeMinutes();
-            if (wanted < 1) wanted = 1;
-            if (wanted > 120) wanted = 120;
-            int planned = Math.Min(wanted, available);
+            // 2) 取本次想延后的分钟数，换算成秒后夹在剩余额度之内
+            int wantedMinutes = RegistryHelper.LoadSnoozeMinutes();
+            if (wantedMinutes < 1) wantedMinutes = 1;
+            if (wantedMinutes > 120) wantedMinutes = 120;
+            int wantedSeconds = wantedMinutes * 60;
+            int plannedSeconds = Math.Min(wantedSeconds, available);
 
-            if (planned < wanted)
+            if (plannedSeconds < wantedSeconds)
             {
                 bool go = CustomMessageBox.ShowConfirm(
-                    $"本次想延后 {wanted} 分钟，但今晚只剩 {planned} 分钟额度。\n\n" +
+                    $"本次想延后 {wantedMinutes} 分钟，但今晚只剩 {SleepLedger.FormatClock(plannedSeconds)} 额度。\n\n" +
                     SleepLedger.DescribeQuota(now) + "\n\n" +
-                    $"是否按剩余额度延后 {planned} 分钟？",
+                    $"是否按剩余额度延后 {SleepLedger.FormatClock(plannedSeconds)}？",
                     "额度不足", this);
                 if (!go)
                     return;
             }
 
-            StartSnooze(planned);
+            StartSnooze(plannedSeconds);
         }
 
         /// <summary>
         /// “稍后继续”：重新弹出倒计时小窗，**重新开始计时**。
         ///
         /// 它不额外放贷，也不给折扣：能延后的时长仍由
-        /// <see cref="SleepLedger.GetAvailableMinutes"/> 决定（本夜已延后的部分早已算进去，
-        /// 因为每一次延后都在结束时按实际经过分钟入账），所以重复点它只会一次次消耗本夜额度，
+        /// <see cref="SleepLedger.GetAvailableSeconds"/> 决定（本夜已延后的部分早已算进去，
+        /// 因为每一次延后都在结束时按实际经过秒数入账），所以重复点它只会一次次消耗本夜额度，
         /// 并不会凭空多出时间。额度见底时与“延后保存数据”一样给出提示。
         /// </summary>
         private void ResumeSnoozeButton_Click(object sender, RoutedEventArgs e)
         {
-            int planned = Math.Min(RegistryHelper.LoadSnoozeMinutes(),
-                SleepLedger.GetAvailableMinutes(DateTime.Now));
+            int planned = Math.Min(RegistryHelper.LoadSnoozeMinutes() * 60,
+                SleepLedger.GetAvailableSeconds(DateTime.Now));
 
             if (planned <= 0)
             {
@@ -431,8 +432,8 @@ namespace SleepReminder
         /// 两条路都会清掉"延后中"标记，因此同一次延后只会结算一次。
         /// 调试 / 测试模式跳过账本写入，避免污染真实的跨重启状态。
         /// </summary>
-        /// <param name="plannedMinutes">本次计划延后的分钟数（调用方已确保在剩余额度以内）。</param>
-        private void StartSnooze(int plannedMinutes)
+        /// <param name="plannedSeconds">本次计划延后的秒数（调用方已确保在剩余额度以内）。</param>
+        private void StartSnooze(int plannedSeconds)
         {
             if (_isSnoozing)
                 return;
@@ -448,7 +449,7 @@ namespace SleepReminder
             _isSnoozing = true;
             trayIcon.Text = "⏰ 睡眠提醒器 - 延后中";  // 托盘提示变更
 
-            int seconds = plannedMinutes * 60;
+            int seconds = plannedSeconds;
             if (App.IsDebugMode) seconds = 10;
 
             // 倒计时窗口里的两行额度文本都按"本次已流逝秒数"实时算：
@@ -467,8 +468,8 @@ namespace SleepReminder
                 System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
                 {
                     // ---------- 延后结束：静默结清这一笔，直接回霸屏 ----------
-                    // 账照记（按实际经过分钟入账 + 清"延后中"锚点），只是不再弹结算窗打扰。
-                    // 用户点“返回提醒页”提前收起时走的也是这里，因此已跑掉的分钟照扣、不会重复计费。
+                    // 账照记（按实际经过秒数入账 + 清"延后中"锚点），只是不再弹结算窗打扰。
+                    // 用户点“返回提醒页”提前收起时走的也是这里，因此已跑掉的秒数照扣、不会重复计费。
                     _isSnoozing = false;
                     trayIcon.Text = "睡眠提醒器";       // 恢复托盘提示
 
